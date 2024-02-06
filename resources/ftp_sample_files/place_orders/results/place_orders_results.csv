@@ -1,0 +1,12 @@
+mp_order_number,cp_order_number,status,message
+,,ERROR,"Order not placed due to validation errors :Line 13: Field mp_order_number cannot be empty. "
+,,ERROR,"Order not placed due to validation errors :Line 14: Field mp_order_number cannot be empty. "
+TEST-3-fail-validation-mp_line_num,,ERROR,"Order not placed due to validation errors :Line 4: Field mp_line_number cannot be empty."
+TEST-4-fail-validation-col-missing,,ERROR,"Order not placed due to validation errors :Line 5: Column count mismatch"
+TEST-5-fail-validation-col-extra,,ERROR,"Order not placed due to validation errors :Line 6: Field mp_line_number cannot be empty."
+TEST-6-2-lines-fail-validation-mp_line_number,,ERROR,"Order not placed due to validation errors :Line 7: Field mp_line_number cannot be empty."
+TEST-1-1-line,5288127135846,SUCCESS,
+TEST-2-2-lines,5288127168614,SUCCESS,
+TEST-7-1-line-fail-bad-variant-id,,ERROR,"variant_id:expected String to be a id; "
+TEST-8-2-lines-fail-bad-variant-id,,ERROR,"variant_id:expected String to be a id; "
+TEST-9-1-line-retry-phone,5288127201382,SUCCESS,

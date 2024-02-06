@@ -1,0 +1,19 @@
+{
+    "name": "feedonomics/webhook-sdk",
+    "description": "SDK for connecting to FeedAMP",
+    "version": "0.1.0",
+    "type" : "sdk",
+    "autoload": {
+        "psr-4": {
+            "FeedonomicsWebHookSDK\\": [
+                "src/"
+            ]
+        }
+    },
+    "require": {
+        "slim/slim": "4.*",
+        "guzzlehttp/psr7": "^2",
+        "guzzlehttp/guzzle": "^7.0",
+        "justinrainbow/json-schema": "^5.2"
+    }
+}

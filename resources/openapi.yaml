@@ -1,0 +1,1843 @@
+openapi: 3.0.0
+info:
+  description: <h2>Overview</h2>  Webhook for interfacing with FeedAMP
+  version: 0.1.0
+  title: Feedamp Webhook SDK
+  contact:
+    email: feedamp@feedonomics.com
+servers:
+  - url: 'https://DOMAIN.TLD'
+tags:
+  - name: Orders
+  - name: Products
+  - name: Marketplace Operations
+paths:
+  /place_order:
+    post:
+      tags:
+        - Orders
+      summary: Place an order
+      description: Place an order into into the e-commerce platform
+      operationId: placeOrder
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrder'
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportedError'
+  /ftp_place_orders:
+    post:
+      tags:
+        - Orders
+      summary: FTP bulk order placement
+      description: Downloads the requested file from an FTP server and placces each order into the platform
+      operationId: bulkImportPlaceOrders
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FTPConfiguration'
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportFTPSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the process the ftp file failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportFTPErrorResponse'
+  /order_statuses:
+    get:
+      tags:
+        - Orders
+      summary: Get fulfillment & Cancellation info
+      description: Get fulfillment and cancellation information for orders
+      operationId: getOrderStatuses
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+
+        - name: store_order_ids
+          description: A array (comma delimited list) of order ids to retrieve status information
+          in: query
+          required: true
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+            minItems: 1
+            maxItems: 250
+
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderStatuesSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportedError'
+  /order_refunds:
+    get:
+      tags:
+        - Orders
+      summary: Get Order Refunds
+      description: Get orders that have any refunds applied for a given date range
+      operationId: getOrderRefunds
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+        - name: update_at_min
+          description: Retrieve refunds for orders that have been updated on or after this time. This field is required if the cursor parameter is not sent. This field has no effect if a cursor is specified in the request.
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: 2020-01-01T00:00:00.000Z
+        - name: update_at_max
+          description: Retrieve refunds for orders that have been updated on or before this time. This field is required if the cursor parameter is not sent. This field has no effect if a cursor is specified in the request.
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: 2020-01-01T00:00:00.000Z
+        - name: limit
+          description: Restrict the max number of refunds to fetch per request. This field has no effect if a cursor is specified in the request.
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 250
+        - name: app_id
+          description: Restrict orders with refunds to only those attributed to the specified app_id. 'Current' can be used to specify the app making the curent request.  This field has no effect if a cursor is specified in the request.
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Current
+        - name: cursor
+          description: A cursor retrieved by the platform used to get the next batch of refunds. If this query parameter is supplied, updated_at_start, updated_at_end, limit, and app_id do not have any effect.
+          in: query
+          required: false
+          schema:
+            type: string
+            example: 2020-01-01T00:00:00.000Z
+
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderRefundsSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    description: Error message of what occurred during processing the requests from the platform.  If multiple requests are made during in the endpoint, this message reflects the last request made where the error was encountered.
+                    type: string
+                    example: Request to get the number of orders with refunds was not successful
+                  platform_response:
+                    description: The results of the last request made to the platform
+                    oneOf:
+                      - $ref: "#/components/schemas/HttpErrorResponse"
+                      - $ref: "#/components/schemas/CurlErrorResponse"
+
+  /inventory_info:
+    get:
+      tags:
+        - Products
+      summary: Get quantity info for requested variant ids
+      description: Get inventory and direct url for requested variant ids
+      operationId: getInventory
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+        - name: variant_ids
+          description: A array (comma delimited list) of order id to retrieve status information
+          in: query
+          required: true
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+            minItems: 1
+            maxItems: 250
+
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryInfoSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportedError'
+
+  /orders:
+    get:
+      tags:
+        - Marketplace Operations
+      summary: Get New orders
+      description: Get new orders that placed into the marketplace but have not started to be processed
+      operationId: getOrders
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+        - name: created_at_min
+          description: Date the orders were created on or after
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+            example: 2020-01-01T00:00:00.000Z
+        - name: limit
+          description: Max number of orders to return per request
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+        - name: since_id
+          description: The last order id retrieved from this call (necessary to send when getting batches beyond the 1st page)
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    description: Error message of what occurred during processing the requests to the platform.  If multiple requests are made ths message reflects where in workflow the error was encountered.
+                    type: string
+                    example: Request to get the number of orders with refunds was not successful
+                  platform_response:
+                    description: The results of the last request made to the platform
+                    oneOf:
+                      - $ref: "#/components/schemas/HttpErrorResponse"
+                      - $ref: "#/components/schemas/CurlErrorResponse"
+
+  /cancel_order:
+    post:
+      tags:
+        - Marketplace Operations
+      summary: Cancel order
+      description: Cancel the order
+      operationId: cancelLines
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrder'
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSuccessResponse'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportedError'
+  /fulfill_order_lines:
+    post:
+      tags:
+        - Marketplace Operations
+      summary: Fulfill order lines
+      description: Update the fulfillment and cancellation information for an order on the originating platform
+      operationId: fulfilLines
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FulfillOrderLines'
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                items:
+                  $ref: '#/components/schemas/ReportSuccessResponses'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MixedResponse'
+  /refund_order_lines:
+    post:
+      tags:
+        - Marketplace Operations
+      summary: Refund order lines
+      description: Update the fulfillment and cancellation information for an order on the originating platform
+      operationId: refundLines
+      parameters:
+        - name: store-id
+          description: The id identifies the shop instance
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: token
+          description: The authorization token for the shop
+          required: true
+          in: header
+          schema:
+            type: string
+            minLength: 1
+        - name: debug-request
+          description: If present this returns the request details that was sent ot the platform
+          required: false
+          in: header
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundOrderLines'
+      responses:
+        '200':
+          description: The request to the ecommerce platform was made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSuccessResponses'
+        '400':
+          description: The request sent to this api failed to validate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationResponse'
+        '502':
+          description: The request to the ecommerce platform failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MixedResponse'
+
+components:
+  schemas:
+
+    CancelOrder:
+      description: Fulfillment information for an order
+      type: object
+      properties:
+        mp_order_number:
+          type: string
+          description: The order number
+          example: AS23ga4f123
+        notify_cystomer:
+          type: boolean
+          description: Email a customer when there is an order update
+        order_lines:
+          type: array
+          description: List of ordered products
+          items:
+            required:
+              - mp_line_number
+              - product_name
+              - quantity
+              - sku
+              - unit_price
+              - cancellations
+            type: object
+            properties:
+              mp_line_number:
+                type: string
+                description: The order line identifier provided by the marketplace.
+                example: afdafasdgasdg
+              sku:
+                type: string
+                description: >-
+                  The SKU of the product that was included in the marketplace
+                  listing.
+                example: 1234-12353
+              product_name:
+                type: string
+                description: 'The product title, as displayed in the marketplace listing.'
+                example: SAMPLE PRODUCT
+              quantity:
+                type: integer
+                description: Amount ordered.
+                example: 1
+              unit_price:
+                type: number
+                description: >-
+                  The price per product (not total, not inlcuding tax, shipping,
+                  or discounts).
+                example: 200
+              sales_tax:
+                type: number
+                description: The total sales tax for this order line.
+                example: 20
+              shipping_method:
+                type: string
+                description: The shipping method for this order line.
+                example: FedEx
+              shipping_price:
+                type: number
+                description: The total shipping price for this order line.
+                example: 1.95
+              shipping_tax:
+                type: number
+                description: The total tax on shipping for this order line.
+                example: 0.19
+              discount_name:
+                type: string
+                description: 'The discount identifier, as configured in the marketplace'
+                example: ''
+              discount:
+                type: number
+                description: The order line total discount amount.
+              shipping_discount_name:
+                type: string
+                description: The shipping discount code / identifier.
+                example: ''
+              shipping_discount:
+                type: number
+                description: The order line total shipping discount.
+              commission:
+                type: number
+                description: >-
+                  Commission on the sale that will be taken by the marketplace.
+                  Note:  If this field is empty, it only means the information
+                  is not available along with the order.  It does not mean the
+                  commission is 0.
+              amount_available_for_refund:
+                type: number
+                description: >-
+                  For orders with promotions in Facebook. This is the max amount
+                  that the can be refunded for the line.  If the seller is tax
+                  inclusive, this value contains all taxes, otherwise the value
+                  reflects the pre-tax amount amount.
+                example: 21.98
+              is_tax_collected_by_marketplace:
+                type: boolean
+                description: Indicate if the taxes are collected by the marketplace.
+                example: false
+              is_target_two_day:
+                type: boolean
+                description: Whether an order is being fulfilled through Target Red (2day expedited shipping)
+                example: false
+              marketplace_fulfilled:
+                description: Identify the order as haveing ben fulfilled by the marketplace
+                type: boolean
+                default: false
+              order_line_additional_properties:
+                type: object
+                description: >-
+                  Key/Value pairs of additional order line data from the
+                  marketplace.
+                example:
+                  {
+                    "important_order_line_field": "value"
+                  }
+              cancellations:
+                type: array
+                description: Array of cancellation objects or null
+                minItems: 1
+                items:
+                  $ref: "#/components/schemas/OrderLineCancellation"
+      required:
+        - mp_order_number
+        - order_lines
+        - notify_customer
+
+    CurlErrorResponse:
+      description: The response form the eCommerce platform.
+      type: object
+      properties:
+        curl_error:
+          description: Curl error code if encountered when making the HTTP request to the eCommerce platform
+          type: integer
+          example: 28
+        exception_message:
+          description: The exception/error message generated by the http client when making the request to the eCommerce platform
+          type: string
+          example: 'cURL error 28: Connection timed out after 20000 milliseconds'
+        debug_request:
+          $ref: "#/components/schemas/DebugRequest"
+
+    FTPConfiguration:
+      description: Request to process a file via ftp to bulk place orders
+      type: object
+      properties:
+        import_url:
+          description: The full url to the file on the ftp server
+          type: string
+          example: sftp://myserver.domain.local/orders/place/2024-01-01-12_00_00_mymarketplace.csv
+        resultfile_url:
+          description: >-
+            The full url to the directory on the ftp server where the result file (containing the response for each order placed) will be uploaded. 
+            The uploaded results file will be named as the same as the file in the import_url with results_ pre-pended.  
+            If this directory is not supplied the upload file will be placed in the same directory as the file specified in import_url
+          type: string
+          example: sftp://myserver.domain.local/order/place/results
+        username:
+          description: The user account name to access the file on the ftp server
+          type: string
+          example: myaccount
+        password:
+          description: The password for the user account used to access the file on the ftp server
+      required:
+        - import_url
+        - username
+        - password
+
+    FulfillOrderLines:
+      description: Fulfillment information for an order
+      type: object
+      properties:
+        mp_order_number:
+          type: string
+          description: The order number
+          example: AS23ga4f123
+        order_lines:
+          type: array
+          description: List of ordered products
+          items:
+            required:
+              - mp_line_number
+              - product_name
+              - quantity
+              - sku
+              - unit_price
+              - fulfillments
+            type: object
+            properties:
+              mp_line_number:
+                type: string
+                description: The order line identifier provided by the marketplace.
+                example: afdafasdgasdg
+              sku:
+                type: string
+                description: >-
+                  The SKU of the product that was included in the marketplace
+                  listing.
+                example: 1234-12353
+              product_name:
+                type: string
+                description: 'The product title, as displayed in the marketplace listing.'
+                example: SAMPLE PRODUCT
+              quantity:
+                type: integer
+                description: Amount ordered.
+                example: 1
+              unit_price:
+                type: number
+                description: >-
+                  The price per product (not total, not inlcuding tax, shipping,
+                  or discounts).
+                example: 200
+              sales_tax:
+                type: number
+                description: The total sales tax for this order line.
+                example: 20
+              shipping_method:
+                type: string
+                description: The shipping method for this order line.
+                example: FedEx
+              shipping_price:
+                type: number
+                description: The total shipping price for this order line.
+                example: 1.95
+              shipping_tax:
+                type: number
+                description: The total tax on shipping for this order line.
+                example: 0.19
+              discount_name:
+                type: string
+                description: 'The discount identifier, as configured in the marketplace'
+                example: ''
+              discount:
+                type: number
+                description: The order line total discount amount.
+              shipping_discount_name:
+                type: string
+                description: The shipping discount code / identifier.
+                example: ''
+              shipping_discount:
+                type: number
+                description: The order line total shipping discount.
+              commission:
+                type: number
+                description: >-
+                  Commission on the sale that will be taken by the marketplace.
+                  Note:  If this field is empty, it only means the information
+                  is not available along with the order.  It does not mean the
+                  commission is 0.
+              amount_available_for_refund:
+                type: number
+                description: >-
+                  For orders with promotions in Facebook. This is the max amount
+                  that the can be refunded for the line.  If the seller is tax
+                  inclusive, this value contains all taxes, otherwise the value
+                  reflects the pre-tax amount amount.
+                example: 21.98
+              is_tax_collected_by_marketplace:
+                type: boolean
+                description: Indicate if the taxes are collected by the marketplace.
+                example: false
+              is_target_two_day:
+                type: boolean
+                description: Whether an order is being fulfilled through Target Red (2day expedited shipping)
+                example: false
+              marketplace_fulfilled:
+                description: Identify the order as haveing ben fulfilled by the marketplace
+                type: boolean
+                default: false
+              order_line_additional_properties:
+                type: object
+                description: >-
+                  Key/Value pairs of additional order line data from the
+                  marketplace.
+                example:
+                  {
+                    "important_order_line_field": "value"
+                  }
+              fulfillments:
+                type: array
+                description: Array of fulfillment objects or null
+                minItems: 1
+                items:
+                  $ref: "#/components/schemas/OrderLineFulfillment"
+      required:
+        - mp_order_number
+        - order_lines
+
+    HttpErrorResponse:
+      description: A non 2XX response from the platform
+      type: object
+      properties:
+        headers:
+          description:  A list of key value pairs that are the header field and the header value returned in the HTTP request.
+          type: object
+          additionalProperties: {}
+          example:
+            {
+              "Content-Type": ["application\/json; charset=utf-8"],
+              "Connection": ["keep-alive"],
+            }
+        response_code:
+          description: The HTTP response code from the request to the eCommerce platform
+          type: integer
+          example: 422
+        response_body:
+          description: The raw HTTP response body returned by the request to the eCommerce platform.
+          type: string
+          example: >-
+            {
+               "errors":
+            }
+        exception_message:
+          description: The exception/error message generated by the http client when making the request to the eCommerce platform
+          type: string
+          example: 'Client error response [url] https://DOMAIN/URL/enpoint.json [status code] 422 [reason phrase] Unprocessable Entity'
+        debug_request:
+          $ref: "#/components/schemas/DebugRequest"
+
+    DebugRequest:
+      description: If debugging is enabled, the information used to make the request is returned
+      type: object
+      properties:
+        method:
+          description: The HTTP verb used to make the request
+          type: string
+          enum: [GET, POST, PUT, DELETE]
+        uri:
+          description: The URI of the request
+          type: string
+        headers:
+          description:  A list of key value pairs that are the header field and the header value returned in the HTTP request.
+          type: object
+          additionalProperties: {}
+          example:
+            {
+              "Content-Type": ["application\/json; charset=utf-8"],
+              "Connection": ["keep-alive"],
+            }
+        query_params:
+          description: List of any query parameters used when making the request to the platform. Field is only present when query parameters are used in the request to the platform.
+          additionalProperties: {}
+          example:
+            {
+              "status": "any",
+              "limit": 255
+            }
+        body:
+          description: The json sent to as part of the request to the patform. Field is only present when sending json to the the platform.
+          type: string
+          example: '{"order":{"key":"value"}}'
+
+
+    InventoryInfoSuccessResponse:
+      description: The response from a call to get invertory information for a list of variant ids.
+      type: object
+      properties:
+        inventory:
+          description: Inventory information
+          type: object
+          properties:
+            variant_id:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                sku_id:
+                  type: string
+                product_id:
+                  type: string
+                url:
+                  type: string
+              required:
+                - quantity
+          example:
+            "VARIANT_ID_123": {
+              "quantity": 1,
+              "sku": "222222",
+              "product_id": "PRODUCT_ID",
+              "url": "https://admin.shopify.com/store/MY_STORE_ID/products/PRODUCT_ID/variants/VARIANT_ID",
+            }
+        platform_response:
+          $ref: "#/components/schemas/SuccessResponse"
+      required:
+        - platform_response
+
+    MixedResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              message:
+                type: string
+        platform_responses:
+          type: array
+          minItems: 1
+          items:
+            anyOf:
+              - $ref: "#/components/schemas/SuccessResponse"
+              - $ref: "#/components/schemas/HttpErrorResponse"
+              - $ref: "#/components/schemas/CurlErrorResponse"
+
+    Order:
+      type: object
+      required:
+        - currency
+        - marketplace_name
+        - mp_order_number
+        - order_lines
+        - purchase_date
+        - shipping_address1
+        - shipping_city
+        - shipping_country_code
+        - shipping_full_name
+        - shipping_postal_code
+        - shipping_state
+      properties:
+        mp_order_number:
+          type: string
+          description: The primary order number provided by the marketplace.
+          example: 111-99998888-55555
+        mp_alt_order_number:
+          type: string
+          description: A secondary order number provided by some marketplaces.
+          example: 152-99632191476188
+        customer_order_number:
+          type: string
+          description: The customer-facing order number provided by some marketplaces.
+          example: '19452824'
+        marketplace_name:
+          type: string
+          description: The name of the marketplace integration
+          example: amazon_uk
+        sales_channel:
+          type: string
+          description: >-
+            The specific channel within a marketplace (typically corresponds to
+            region).
+          example: MARKETPLACE.com
+        locale:
+          type: string
+          description: Additional region and/or language information
+          example: be-FR
+        customer_full_name:
+          type: string
+          description: The full name of the customer.
+          example: John Doe
+        customer_email:
+          type: string
+          description: >-
+            The customer's email address. Note: Not all marketplaces provide a
+            customer email. If your system requires customer email, a fallback
+            dummy email can be configured. Reach out to our Marketplace team.
+          example: john.doe@example.com
+        customer_phone:
+          type: string
+          description: The phone number of the customer
+          example: '5558675309'
+        customer_vat:
+          type: string
+          description: International Value-Added Tax identification number of customer
+          example: '78131452263'
+        purchase_date:
+          type: string
+          description: The datetime of the purchase date.
+          example: '2018-05-01T23:52:01.000Z'
+        currency:
+          type: string
+          description: The currency in ISO 4217 format.
+          example: USD
+        delivery_notes:
+          type: string
+          description: >-
+            The customer's instructions to the delivery service regarding
+            where/how to leave the package.
+          example: leave by the back door.
+        estimated_ship_date:
+          type: string
+          description: A single expected ship-by date when a window is not given.
+          example: ''
+        earliest_ship_date:
+          type: string
+          description: The earliest expected ship-by date.
+          example: '2018-02-04T22:00:00.000Z'
+        latest_ship_date:
+          type: string
+          description: The latest expected ship-by date.
+          example: '2018-02-07T22:00:00.000Z'
+        estimated_delivery_date:
+          type: string
+          description: A single expected deliver-by date when a window is not given.
+          example: '2018-02-10T22:00:00.000Z'
+        latest_delivery_date:
+          type: string
+          description: The latest expected deliver-by date.
+          example: ''
+        earliest_delivery_date:
+          type: string
+          description: The earliest expected deliver-by date.
+          example: '2018-02-10T22:00:00.000Z'
+        is_amazon_prime:
+          type: boolean
+          description: Whether an order is being fulfilled through Amazon Prime
+          default: false
+        is_wish_express:
+          type: boolean
+          description: Whether an order is being fulfilled through Wish Express
+          default: false
+        gift_message:
+          type: string
+          description: Gift message attached to order
+          example: ''
+        paypal_transaction_ids:
+          type: string
+          description: A comma-separated list of transaction IDs generated by PayPal
+          example: ''
+        feedamp_order_id:
+          type: string
+          description: Order identifier in FeedAMP
+          example: ''
+        marketing_opt_in:
+          type: string
+          description: Opted in to marketing emails
+          example: ''
+        billing_full_name:
+          type: string
+          description: Name on the Billing Address
+          example: John M. Doe
+        billing_address_type:
+          type: string
+          description: The category of the billing address
+          example: business
+        billing_address1:
+          type: string
+          description: 'Billing street address, line 1.'
+          example: 123 Fake Street
+        billing_address2:
+          type: string
+          description: 'Billing street address, line 2.'
+          example: Building 456
+        billing_address3:
+          type: string
+          description: 'Billing street address, line 3.'
+          example: Room 789
+        billing_city:
+          type: string
+          description: Billing Address (City)
+          example: Ghost Town
+        billing_state:
+          type: string
+          description: Billing Address (State or Province)
+          example: DC
+        billing_postal_code:
+          type: string
+          description: Billing Address (Postal or Zip code)
+          example: '91234'
+        billing_country_code:
+          type: string
+          description: Billing Address (Country Code)
+          example: USA
+        billing_phone:
+          type: string
+          description: Billing Phone Number
+          example: '9995550101'
+        shipping_full_name:
+          type: string
+          description: Name on the Shipping Address
+          example: John M. Doe
+        shipping_address_type:
+          type: string
+          description: The category of the shipping address
+          example: business
+        shipping_address1:
+          type: string
+          description: 'Shipping street address, line 1.'
+          example: 123 Fake Street
+        shipping_address2:
+          type: string
+          description: 'Shipping street address, line 2.'
+          example: Building 456
+        shipping_address3:
+          type: string
+          description: 'Shipping street address, line 3.'
+          example: Room 789
+        shipping_city:
+          type: string
+          description: Shipping Address (City)
+          example: Ghost Town
+        shipping_state:
+          type: string
+          description: Shipping Address (State or Province)
+          example: DC
+        shipping_postal_code:
+          type: string
+          description: Shipping Address (Postal or Zip code)
+          example: '91234'
+        shipping_country_code:
+          type: string
+          description: Shipping Address (Country Code)
+          example: USA
+        shipping_phone:
+          type: string
+          description: Shipping Phone Number
+          example: '9995550101'
+        order_tags:
+          type: string
+          description: A comma delimited list of tags for the order
+          example: "Tag1,Tag2"
+        customer_tags:
+          type: string
+          description: A comma delimited list of tags for the customer
+          example: "Tag1,Tag2"
+        order_additional_properties:
+          type: object
+          description: Key/Value pairs of additional order data from the marketplace.
+          additionalProperties: true
+          example:
+            {
+              "important_order_field": "value"
+            }
+        order_lines:
+          type: array
+          description: List of ordered products
+          items:
+            required:
+              - mp_line_number
+              - product_name
+              - quantity
+              - sku
+              - unit_price
+            type: object
+            properties:
+              mp_line_number:
+                type: string
+                description: The order line identifier provided by the marketplace.
+                example: afdafasdgasdg
+              sku:
+                type: string
+                description: >-
+                  The SKU of the product that was included in the marketplace
+                  listing.
+                example: 1234-12353
+              product_name:
+                type: string
+                description: 'The product title, as displayed in the marketplace listing.'
+                example: SAMPLE PRODUCT
+              quantity:
+                type: integer
+                description: Amount ordered.
+                example: 1
+              unit_price:
+                type: number
+                description: >-
+                  The price per product (not total, not including tax, shipping,
+                  or discounts).
+                example: 200
+              sales_tax:
+                type: number
+                description: The total sales tax for this order line.
+                example: 20
+              shipping_method:
+                type: string
+                description: The shipping method for this order line.
+                example: FedEx
+              shipping_price:
+                type: number
+                description: The total shipping price for this order line.
+                example: 1.95
+              shipping_tax:
+                type: number
+                description: The total tax on shipping for this order line.
+                example: 0.19
+              discount_name:
+                type: string
+                description: 'The discount identifier, as configured in the marketplace'
+                example: ''
+              discount:
+                type: number
+                description: The order line total discount amount.
+              shipping_discount_name:
+                type: string
+                description: The shipping discount code / identifier.
+                example: ''
+              shipping_discount:
+                type: number
+                description: The order line total shipping discount.
+              commission:
+                type: number
+                description: >-
+                  Commission on the sale that will be taken by the marketplace.
+                  Note:  If this field is empty, it only means the information
+                  is not available along with the order.  It does not mean the
+                  commission is 0.
+              amount_available_for_refund:
+                type: number
+                description: >-
+                  For orders with promotions in Facebook. This is the max amount
+                  that the can be refunded for the line.  If the seller is tax
+                  inclusive, this value contains all taxes, otherwise the value
+                  reflects the pre-tax amount amount.
+                example: 21.98
+              is_tax_collected_by_marketplace:
+                type: boolean
+                description: Indicate if the taxes are collected by the marketplace.
+                example: false
+              is_target_two_day:
+                type: boolean
+                description: Whether an order is being fulfilled through Target Red (2day expedited shipping)
+                example: false
+              marketplace_fulfilled:
+                description: Identify the order as haveing ben fulfilled by the marketplace
+                type: boolean
+                default: false
+              order_line_additional_properties:
+                type: object
+                description: >-
+                  Key/Value pairs of additional order line data from the
+                  marketplace.
+                additionalProperties: true
+                example:
+                  {
+                    "important_order_line_field": "value"
+                  }
+
+    OrderLineFulfillment:
+      required:
+        - carrier
+        - quantity_shipped
+        - shipped_date
+        - tracking_number
+      type: object
+      properties:
+        quantity_shipped:
+          type: integer
+          description: >-
+            The quantity of items (of this order line) in
+            the shipment.
+          example: 1
+        shipped_date:
+          type: string
+          format: date-time
+          description: >-
+            The date-time when the shipment was sent out
+            (time is optional). ISO 8601 format required.
+          example: '2018-05-10T18:17:04+00:00'
+        carrier:
+          type: string
+          description: The shipment's service carrier company name.
+          example: Friendly Carrier Service
+        tracking_number:
+          type: string
+          description: The shipment's tracking number.
+          example: 123ABCTRACKME
+        tracking_url:
+          type: string
+          description: >-
+            The shipment's tracking URL. Note: This field is
+            required by some marketplaces if the carrier is
+            not recognized.
+          example: >-
+            http://friendlycarrierservice.com/track?id=123ABCTRACKME
+
+    OrderLineCancellation:
+      type: object
+      required:
+        - cancellation_reason
+        - quantity_cancelled
+      properties:
+        quantity_cancelled:
+          type: integer
+          description: >-
+            The quantity of items in the order line being
+            cancelled.
+          example: 1
+        cancellation_reason:
+          type: string
+          description: >-
+            The reason for the cancellation. Use of 'other'
+            is not recommended - some marketplaces may not
+            accept it.
+          example: out_of_stock
+          enum:
+            - customer_cancelled
+            - unable_to_ship
+            - out_of_stock
+            - price_error
+            - tax_error
+            - shipping_price_error
+            - other
+
+    OrderRefundsSuccessResponse:
+      type: object
+      properties:
+        refunds:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              refund_number:
+                type: string
+              partial_refund_compatible:
+                type: boolean
+              refund_id:
+                type: string
+              refund_line_id:
+                type: string
+              refunds:
+                description: The value of the refunds property in the order data returned by the platform
+                type: object
+              order_lines:
+                description: The value of the line_items property in the order data returned by the platform
+                type: object
+            required:
+              - partial_refund_compatible
+              - refund_id
+              - refund_line_id
+              - refunds
+              - order_lines
+        cursor:
+          description:  If this field is set there are additional pages to get. The client will need to make additional
+          type: boolean
+        platform_response:
+          $ref: "#/components/schemas/SuccessResponse"
+      required:
+        - refunds
+        - platform_response
+
+    OrderStatuesSuccessResponse:
+      description: The response from a call to get order statuses
+      type: object
+      properties:
+        failed_ids:
+          description: List of orders that no status information was able to be retrieved
+          type: array
+          items:
+            type: integer
+        statuses:
+          description: Fulfillment and Cancellation information for the requested orders
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: The order id
+                type: string
+              fulfillments:
+                description: Key value pairs of order line ids and fulfillment information
+                type: object
+                properties:
+                  line_id:
+                    type: object
+                    properties:
+                      fulfillments:
+                        type: object
+                        properties:
+                          quantity_shipped:
+                            type: integer
+                          shipped_date:
+                            type: string
+                          carrier:
+                            type: string
+                          tracking_number:
+                            type: string
+                          tracking_url:
+                            type: string
+                          return_tracking_number:
+                            type: string
+                      total_fulfilled:
+                        type: integer
+                example:
+                  "ORDER_LINE_ID_123": {
+                    "quantity_shipped": 1,
+                    "shipped_date": "2023-11-17T07:38:17-08:00",
+                    "carrier": "Acme Delivery INC",
+                    "tracking_number": "TEST123",
+                    "tracking_url": "http://acme-delivery-inc.xyz?id=TEST123",
+                    "return_tracking_number": ""
+                  }
+
+              cancellations:
+                description: Key value pairs of order line ids and cancellation information
+                type: object
+                properties:
+                  line_id:
+                    type: object
+                    properties:
+                      quantity_cancelled:
+                        type: integer
+                      cancellation_reason:
+                        type: string
+                        enum: ['customer_cancelled', 'fraud', 'out_of_stock', 'other']
+                example:
+                  "ORDER_LINE_ID_456": {
+                    "quantity_cancelled": 1,
+                    "cancellation_reason": "other"
+                  }
+        platform_response:
+          $ref: "#/components/schemas/SuccessResponse"
+      required:
+        - platform_response
+
+    OrdersSuccessResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        platform_response:
+          $ref: "#/components/schemas/SuccessResponse"
+      required:
+        - orders
+        - platform_response
+        - cancellations
+
+    PlaceOrder:
+      description: Order to insert into the eCommerce platform
+      type: object
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        config:
+          type: object
+          properties:
+            add_delivery_notes_to_notes:
+              description: Include marketplace-provided delivery notes in Shopify order notes. This field will always be included in Additonal Details.
+              type: boolean
+              default: false
+            add_empty_info:
+              description: Include additional information fields to Additional Details, even when empty.
+              type: boolean
+              default: false
+            aggregate_shipping_lines:
+              description: Collect all tax lines, shipping lines, and shipping tax lines into a single line, the new default behavior.  (This field has been deprecated and is scheduled for removal)
+              type: boolean
+              default: false
+            add_customer_order_number_to_notes:
+              description: Include customer-facing marketplace order number in Shopify order notes. This field will always be included in Additonal Details.
+              type: boolean
+              default: false
+            deduct_shipping_discount_from_shipping_price:
+              description: Apply any shipping discounts directly to the order's shipping price. If this flag is disabled, shipping discounts will instead be combined with order discounts.
+              type: boolean
+              default: false
+            default_currency:
+              description: Use this currency if order does not specify one
+              type: string
+              enum: ['USD', 'TRY', 'JPY', 'EUR', ' INR', 'AUD', 'GBP', 'MXN', 'CAD', 'BRL']
+              default: 'USD'
+            dummy_customer_email:
+              description: 'For customers with no email, report order to Shopify with this email instead. Otherwise, Customer Name will not appear in the Shopify Order.'
+              type: string
+              default: 'dummy_customer_override@example.com'
+            include_marketplace_promo_note:
+              description: include marketplace sponsored discounts in Shopify order notes. This field will always be included in Additonal Details
+              type: boolean
+              default: false
+            include_order_line_additional_properties:
+              description: include data in the order_line_additional_properties in Shopify notes/note attributes
+              type: boolean
+              default: false
+            shipping_method_map:
+              description: Translate shipping methods. Keys are Marketplace shipping methods. Values are eCommerce Platform shipping methods. Case-sensitive.
+              type: object
+              additionalProperties: {}
+              example:
+                {
+                  "STANDARD (1 - 4 Business days)": "Free Shipping",
+                  "Standard": "FedEx Ground"
+                }
+            source_name_format:
+              description: >-
+                Note: Selecting option Marketplace Name will disable searches by Marketplace Order Number in Shopify.
+              type: string
+              enum: ['Marketplace Name', 'Marketplace Name + Marketplace Order Number', 'Marketplace Order Number']
+              default: 'Marketplace Name + Marketplace Order Number'
+            transaction_gateway:
+              description: Set an order's payment gateway field to this value. Otherwise, will be blank.
+              type: string
+              default: ''
+            transactions:
+              description: Create a Transaction in Shopify along with placing the Order. No payment information will actually be included. Required for Refund support.
+              type: boolean
+              default: false
+            use_mp_product_name:
+              description: Place Order With Marketplace Product Name
+              type: boolean
+              default: true
+            use_note_attributes:
+              description: Set to true to store all additional information fields (Customer Order Number, Delivery Notes, Marketplace Promotion) in the Additional Details section instead of the Notes section.
+              type: boolean
+              default: false
+      required:
+        - order
+
+    RefundOrderLines:
+      description: Fulfillment information for an order
+      type: object
+      properties:
+        mp_order_number:
+          type: string
+          description: The order number
+          example: AS23ga4f123
+        notify_customer:
+          type: boolean
+          description: Email a customer when there is an order update
+        currency:
+          type: string
+          description: The currency in ISO 4217 format.
+        location_id:
+          type: integer
+          description: This is the location from where inventory is drawn from to fulfill orders
+        order_lines:
+          type: array
+          description: List of ordered products
+          items:
+            required:
+              - mp_line_number
+              - product_name
+              - quantity
+              - sku
+              - unit_price
+              - cancellations
+            type: object
+            properties:
+              mp_line_number:
+                type: string
+                description: The order line identifier provided by the marketplace.
+                example: afdafasdgasdg
+              sku:
+                type: string
+                description: >-
+                  The SKU of the product that was included in the marketplace
+                  listing.
+                example: 1234-12353
+              product_name:
+                type: string
+                description: 'The product title, as displayed in the marketplace listing.'
+                example: SAMPLE PRODUCT
+              quantity:
+                type: integer
+                description: Amount ordered.
+                example: 1
+              unit_price:
+                type: number
+                description: >-
+                  The price per product (not total, not including tax, shipping, or discounts).
+                example: 200
+              sales_tax:
+                type: number
+                description: The total sales tax for this order line.
+                example: 20
+              shipping_method:
+                type: string
+                description: The shipping method for this order line.
+                example: FedEx
+              shipping_price:
+                type: number
+                description: The total shipping price for this order line.
+                example: 1.95
+              shipping_tax:
+                type: number
+                description: The total tax on shipping for this order line.
+                example: 0.19
+              discount_name:
+                type: string
+                description: 'The discount identifier, as configured in the marketplace'
+                example: ''
+              discount:
+                type: number
+                description: The order line total discount amount.
+              shipping_discount_name:
+                type: string
+                description: The shipping discount code / identifier.
+                example: ''
+              shipping_discount:
+                type: number
+                description: The order line total shipping discount.
+              commission:
+                type: number
+                description: >-
+                  Commission on the sale that will be taken by the marketplace.
+                  Note:  If this field is empty, it only means the information
+                  is not available along with the order.  It does not mean the
+                  commission is 0.
+              amount_available_for_refund:
+                type: number
+                description: >-
+                  For orders with promotions in Facebook. This is the max amount
+                  that the can be refunded for the line.  If the seller is tax
+                  inclusive, this value contains all taxes, otherwise the value
+                  reflects the pre-tax amount amount.
+                example: 21.98
+              is_tax_collected_by_marketplace:
+                type: boolean
+                description: Indicate if the taxes are collected by the marketplace.
+                example: false
+              is_target_two_day:
+                type: boolean
+                description: Whether an order is being fulfilled through Target Red (2day expedited shipping)
+                example: false
+              marketplace_fulfilled:
+                description: Identify the order as haveing ben fulfilled by the marketplace
+                type: boolean
+                default: false
+              order_line_additional_properties:
+                type: object
+                description: >-
+                  Key/Value pairs of additional order line data from the
+                  marketplace.
+                example:
+                  {
+                    "important_order_line_field": "value"
+                  }
+              cancellations:
+                type: array
+                description: Array of cancellation objects or null
+                minItems: 1
+                items:
+                  $ref: "#/components/schemas/OrderLineCancellation"
+      required:
+        - mp_order_number
+        - currency
+        - order_lines
+        - notify_customer
+        - location_id
+
+    ReportedError:
+      description: The response from a call to the place order endpoint
+      type: object
+      properties:
+        platform_response:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/HttpErrorResponse"
+            - $ref: "#/components/schemas/CurlErrorResponse"
+      required:
+        - platform_response
+
+    ReportFTPErrorResponse:
+      description: >
+        ftp Error that prevented the application from processing the requested file. If the results file cannot be uploaded to the ftp server, errors returned by shopify during processing each order will be reported
+      type: object
+      properties:
+        error:
+          description: An message describing the error that occurred in the webhook sdk app
+          type: string
+          example: "Unable to upload results file"
+        platform_errors:
+          description: On the event that the results file cannot be uploaded, any errors from the platform are reported here.
+          type: array
+          items:
+            type: string
+          example: ["ORDER_NUMBER,,ERROR,\"Unable to reserve inventory\""]
+
+    ReportFTPSuccessResponse:
+      description: The response when the requested ftp file could be processed
+      type: object
+      properties:
+        results_url:
+          description: The full path location ot the results file for this operation
+          type: string
+          example:  sftp://server.local/order/place/results_2024-01-01_12_00_00_marketplace.csv
+      required:
+        - results_url
+
+    ReportSuccessResponse:
+      description: Report that the request was successfully completed on the platform
+      type: object
+      properties:
+        platform_response:
+          $ref: "#/components/schemas/SuccessResponse"
+      required:
+        - platform_response
+
+    ReportSuccessResponses:
+      description: Report that the request was successfully completed on the platform
+      type: object
+      properties:
+        platform_responses:
+          type: array
+          minimum: 1
+          items:
+            $ref: "#/components/schemas/SuccessResponse"
+
+      required:
+        - platform_responses
+
+    RequestValidationResponse:
+      description: The response to an order placement request that has validation errors
+      type: array
+      items:
+        $ref: "#/components/schemas/ValidationError"
+
+    SuccessResponse:
+      description: The response form the eCommerce platform.
+      type: object
+      properties:
+        headers:
+          description:  A list of key value pairs that are the header field and the header value returned in the HTTP request.
+          type: object
+          additionalProperties: {}
+          example:
+            {
+              "Content-Type": ["application\/json; charset=utf-8"],
+              "Connection": ["keep-alive"],
+            }
+        response_code:
+          description: The HTTP response code from the request to the eCommerce platform
+          type: integer
+          example: 200
+        response_body:
+          description: The raw HTTP response body returned by the request to the eCommerce platform.
+          type: string
+          example: >-
+            {
+               "order":
+            }
+        debug_request:
+          $ref: "#/components/schemas/DebugRequest"
+
+    ValidationError:
+      description: Validation error detected when placing/updating an order
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum: [
+            FIELD_INCORRECT_DATA_TYPE,
+            FIELD_INVALID_VALUE,
+            INVALID_PAYLOAD,
+            INVALID_QUERY_PARAM
+              MISSING_REQUIRED_FIELD,
+            UNKNOWN_FIELD_PRESENT,
+          ]
+          description: >-
+            Code to uniquely identify the type of error
+          example: FIELD_INVALID_VALUE
+        message:
+          type: string
+          description: The error message for the error code
+          example: Value SOMETHING not valid for state
+      additionalProperties: false

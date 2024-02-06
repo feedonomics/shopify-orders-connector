@@ -1,0 +1,645 @@
+{
+	"info": {
+		"_postman_id": "fc39d32e-e675-4311-abf5-95b102854d51",
+		"name": "Webhook Endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "14984226"
+	},
+	"item": [
+		{
+			"name": "Error Test Cases",
+			"item": [
+				{
+					"name": "Place Order - faill",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "{{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"order\": {\n    \"mp_alt_order_number\": \"152-99632191476188\",\n    \"customer_order_number\": \"19452824\",\n    \"marketplace_name\": \"amazon_uk\",\n    \"sales_channel\": \"MARKETPLACE.com\",\n    \"locale\": \"be-FR\",\n    \"customer_full_name\": \"John Doe\",\n    \"customer_email\": \"john.doe@example.com\",\n    \"customer_phone\": \"5558675309\",\n    \"customer_vat\": \"78131452263\",\n    \"purchase_date\": \"2018-05-01T23:52:01.000Z\",\n    \"currency\": \"USD\",\n    \"delivery_notes\": \"leave by the back door.\",\n    \"estimated_ship_date\": \"\",\n    \"earliest_ship_date\": \"2018-02-04T22:00:00.000Z\",\n    \"latest_ship_date\": \"2018-02-07T22:00:00.000Z\",\n    \"estimated_delivery_date\": \"2018-02-10T22:00:00.000Z\",\n    \"latest_delivery_date\": \"\",\n    \"earliest_delivery_date\": \"2018-02-10T22:00:00.000Z\",\n    \"is_amazon_prime\": false,\n    \"is_wish_express\": false,\n    \"gift_message\": \"\",\n    \"paypal_transaction_ids\": \"\",\n    \"feedamp_order_id\": \"\",\n    \"marketing_opt_in\": \"\",\n    \"billing_full_name\": \"John M. Doe\",\n    \"billing_address_type\": \"business\",\n    \"billing_address1\": \"123 Fake Street\",\n    \"billing_address2\": \"Building 456\",\n    \"billing_address3\": \"Room 789\",\n    \"billing_city\": \"Ghost Town\",\n    \"billing_state\": \"DC\",\n    \"billing_postal_code\": \"91234\",\n    \"billing_country_code\": \"USA\",\n    \"billing_phone\": \"123-456-7890\",\n    \"shipping_full_name\": \"John M. Doe\",\n    \"shipping_address_type\": \"business\",\n    \"shipping_address1\": \"123 Fake Street\",\n    \"shipping_address2\": \"Building 456\",\n    \"shipping_address3\": \"Room 789\",\n    \"shipping_city\": \"Ghost Town\",\n    \"shipping_state\": \"DC\",\n    \"shipping_postal_code\": \"91234\",\n    \"shipping_country_code\": \"USA\",\n    \"shipping_phone\": \"123-456-7890\",\n    \"order_tags\": \"Tag1,Tag2\",\n    \"customer_tags\": \"Tag1,Tag2\",\n    \"order_additional_properties\": {\n      \"additionalProp1\": {}\n    },\n    \"order_lines\": [\n      {\n        \"mp_line_number\": \"afdafasdgasdg\",\n        \"sku\": \"39438\",\n        \"product_name\": \"SAMPLE PRODUCT\",\n        \"quantity\": 1,\n        \"unit_price\": 200,\n        \"sales_tax\": 20,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 1.95,\n        \"shipping_tax\": 0.19,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"amount_available_for_refund\": 21.98,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false,\n        \"order_line_additional_properties\": {\n          \"additionalProp1\": \"string\",\n          \"additionalProp2\": \"string\",\n          \"additionalProp3\": \"string\"\n        }\n      }\n    ]\n  },\n  \"config\": {\n    \"shipping_method_map\": {\n      \"Expedited\": \"UPS\"\n    }\n  }\n}"
+						},
+						"url": "{{host}}/place_order"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Statuses - partial",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "{{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/order_statuses?store_order_ids=22,5218941141094",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"order_statuses"
+							],
+							"query": [
+								{
+									"key": "store_order_ids",
+									"value": "22,5218941141094"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Statuses - none",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "{{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/order_statuses?store_order_ids=22",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"order_statuses"
+							],
+							"query": [
+								{
+									"key": "store_order_ids",
+									"value": "22"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Inventory Info - partial",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "{{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/inventory_info?variant_ids=4818543116318,40221188227174,2",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"inventory_info"
+							],
+							"query": [
+								{
+									"key": "variant_ids",
+									"value": "4818543116318,40221188227174,2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Inventory Info - none",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "{{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/inventory_info?variant_ids=2",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"inventory_info"
+							],
+							"query": [
+								{
+									"key": "variant_ids",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place Order Fail Bad Store-id",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "http://localhost/?={{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"order\": {\n\t\t\"mp_order_number\": \"111-99998888-44444\",\n    \"mp_alt_order_number\": \"152-99632199999999\",\n    \"customer_order_number\": \"19452824\",\n    \"marketplace_name\": \"amazon_us\",\n    \"sales_channel\": \"MARKETPLACE.com\",\n    \"locale\": \"en-US\",\n    \"customer_full_name\": \"John Doe\",\n    \"customer_email\": \"john.doe@example.com\",\n    \"customer_phone\": \"5558675309\",\n    \"customer_vat\": \"78131452263\",\n    \"purchase_date\": \"2018-05-01T23:52:01.000Z\",\n    \"currency\": \"USD\",\n    \"delivery_notes\": \"leave by the back door.\",\n    \"estimated_ship_date\": \"\",\n    \"earliest_ship_date\": \"2018-02-04T22:00:00.000Z\",\n    \"latest_ship_date\": \"2018-02-07T22:00:00.000Z\",\n    \"estimated_delivery_date\": \"2018-02-10T22:00:00.000Z\",\n    \"latest_delivery_date\": \"\",\n    \"earliest_delivery_date\": \"2018-02-10T22:00:00.000Z\",\n    \"is_amazon_prime\": false,\n    \"is_wish_express\": false,\n    \"gift_message\": \"\",\n    \"paypal_transaction_ids\": \"\",\n    \"feedamp_order_id\": \"\",\n    \"marketing_opt_in\": \"\",\n    \"billing_full_name\": \"John M. Doe\",\n    \"billing_address_type\": \"business\",\n    \"billing_address1\": \"123 Fake Street\",\n    \"billing_address2\": \"Building 456\",\n    \"billing_address3\": \"Room 789\",\n    \"billing_city\": \"Ghost Town\",\n    \"billing_state\": \"DC\",\n    \"billing_postal_code\": \"91234\",\n    \"billing_country_code\": \"USA\",\n    \"billing_phone\": \"123-456-7890\",\n    \"shipping_full_name\": \"John M. Doe\",\n    \"shipping_address_type\": \"business\",\n    \"shipping_address1\": \"123 Fake Street\",\n    \"shipping_address2\": \"Building 456\",\n    \"shipping_address3\": \"Room 789\",\n    \"shipping_city\": \"Ghost Town\",\n    \"shipping_state\": \"DC\",\n    \"shipping_postal_code\": \"91234\",\n    \"shipping_country_code\": \"USA\",\n    \"shipping_phone\": \"123-456-7890\",\n    \"order_tags\": \"Tag1,Tag2\",\n    \"customer_tags\": \"Tag1,Tag2\",\n    \"order_additional_properties\": {\n      \"additionalProp1\": {}\n    },\n    \"order_lines\": [\n      {\n        \"mp_line_number\": \"ABC-123\",\n        \"sku\": \"39438\",\n        \"product_name\": \"SAMPLE PRODUCT\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false\n      },\n      {\n        \"mp_line_number\": \"ABC-456\",\n        \"sku\": \"39439\",\n        \"product_name\": \"SAMPLE PRODUCT 2\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false\n      }\n    ]\t\t\n  },\n  \"config\": {\n    \"shipping_method_map\": {\n      \"Expedited\": \"UPS\"\n    }\n  }\n}"
+						},
+						"url": "{{host}}/place_order"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Refunds erer",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "User-Agent",
+								"value": "insomnia/2023.5.8"
+							},
+							{
+								"key": "store-id",
+								"value": "{{store_id}}"
+							},
+							{
+								"key": "token",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/order_refunds?updated_at_min=2023-11-30T15:07:16Z&updated_at_max=2023-12-01T00:00:00Z&app_id=current&cursor=eyJsaW1pdCI6IjIiLCJwYWdlX2luZm8iOiJleUprYVhKbFkzUnBiMjRpT2lKdVpYaDBJaXdpWm1sdVlXNWphV0ZzWDNOMFlYUjFjeUk2SW5KbFpuVnVaR1ZrSWl3aWMzUmhkSFZ6SWpvaVlXNTVJaXdpZFhCa1lYUmxaRjloZEY5dGFXNGlPaUl5TURJekxURXhMVEU1SURFeU9qQXdPakF3SUZWVVF5SXNJblZ3WkdGMFpXUmZZWFJmYldGNElqb2lNakF5TXkweE1TMHlNQ0F5TXpvd01Eb3dNQ0JWVkVNaUxDSnNZWE4wWDJsa0lqbzFNVGt5TWpnMU5EZzNNakEyTENKc1lYTjBYM1poYkhWbElqb2lNakF5TXkweE1TMHlNQ0F4Tmpvek1UbzBPUzQyTnpJNE5EWWlmUSIsInN0YXR1cyI6bnVsbH0=&updated_at_min=2023-11-22T08:00:00Z&updated_at_max=2023-11-22T09:00:00Z&limit=3",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"order_refunds"
+							],
+							"query": [
+								{
+									"key": "updated_at_min",
+									"value": "2023-11-30T15:07:16Z"
+								},
+								{
+									"key": "updated_at_max",
+									"value": "2023-12-01T00:00:00Z"
+								},
+								{
+									"key": "app_id",
+									"value": "current"
+								},
+								{
+									"key": "cursor",
+									"value": "eyJsaW1pdCI6IjIiLCJwYWdlX2luZm8iOiJleUprYVhKbFkzUnBiMjRpT2lKdVpYaDBJaXdpWm1sdVlXNWphV0ZzWDNOMFlYUjFjeUk2SW5KbFpuVnVaR1ZrSWl3aWMzUmhkSFZ6SWpvaVlXNTVJaXdpZFhCa1lYUmxaRjloZEY5dGFXNGlPaUl5TURJekxURXhMVEU1SURFeU9qQXdPakF3SUZWVVF5SXNJblZ3WkdGMFpXUmZZWFJmYldGNElqb2lNakF5TXkweE1TMHlNQ0F5TXpvd01Eb3dNQ0JWVkVNaUxDSnNZWE4wWDJsa0lqbzFNVGt5TWpnMU5EZzNNakEyTENKc1lYTjBYM1poYkhWbElqb2lNakF5TXkweE1TMHlNQ0F4Tmpvek1UbzBPUzQyTnpJNE5EWWlmUSIsInN0YXR1cyI6bnVsbH0="
+								},
+								{
+									"key": "updated_at_min",
+									"value": "2023-11-22T08:00:00Z"
+								},
+								{
+									"key": "updated_at_max",
+									"value": "2023-11-22T09:00:00Z"
+								},
+								{
+									"key": "limit",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Place Order",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"order\": {\n\t\t\"mp_order_number\": \"111-99998888-44444\",\n    \"mp_alt_order_number\": \"152-99632199999999\",\n    \"customer_order_number\": \"19452824\",\n    \"marketplace_name\": \"amazon_us\",\n    \"sales_channel\": \"MARKETPLACE.com\",\n    \"locale\": \"en-US\",\n    \"customer_full_name\": \"John Doe\",\n    \"customer_email\": \"john.doe@example.com\",\n    \"customer_phone\": \"5558675309\",\n    \"customer_vat\": \"78131452263\",\n    \"purchase_date\": \"2018-05-01T23:52:01.000Z\",\n    \"currency\": \"USD\",\n    \"delivery_notes\": \"leave by the back door.\",\n    \"estimated_ship_date\": \"\",\n    \"earliest_ship_date\": \"2018-02-04T22:00:00.000Z\",\n    \"latest_ship_date\": \"2018-02-07T22:00:00.000Z\",\n    \"estimated_delivery_date\": \"2018-02-10T22:00:00.000Z\",\n    \"latest_delivery_date\": \"\",\n    \"earliest_delivery_date\": \"2018-02-10T22:00:00.000Z\",\n    \"is_amazon_prime\": false,\n    \"is_wish_express\": false,\n    \"gift_message\": \"\",\n    \"paypal_transaction_ids\": \"\",\n    \"feedamp_order_id\": \"\",\n    \"marketing_opt_in\": \"\",\n    \"billing_full_name\": \"John M. Doe\",\n    \"billing_address_type\": \"business\",\n    \"billing_address1\": \"123 Fake Street\",\n    \"billing_address2\": \"Building 456\",\n    \"billing_address3\": \"Room 789\",\n    \"billing_city\": \"Ghost Town\",\n    \"billing_state\": \"DC\",\n    \"billing_postal_code\": \"91234\",\n    \"billing_country_code\": \"USA\",\n    \"billing_phone\": \"123-456-7890\",\n    \"shipping_full_name\": \"John M. Doe\",\n    \"shipping_address_type\": \"business\",\n    \"shipping_address1\": \"123 Fake Street\",\n    \"shipping_address2\": \"Building 456\",\n    \"shipping_address3\": \"Room 789\",\n    \"shipping_city\": \"Ghost Town\",\n    \"shipping_state\": \"DC\",\n    \"shipping_postal_code\": \"91234\",\n    \"shipping_country_code\": \"USA\",\n    \"shipping_phone\": \"123-456-7890\",\n    \"order_tags\": \"Tag1,Tag2\",\n    \"customer_tags\": \"Tag1,Tag2\",\n    \"order_additional_properties\": {\n      \"additionalProp1\": {}\n    },\n    \"order_lines\": [\n      {\n        \"mp_line_number\": \"ABC-123\",\n        \"sku\": \"39438\",\n        \"product_name\": \"SAMPLE PRODUCT\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false\n      },\n      {\n        \"mp_line_number\": \"ABC-456\",\n        \"sku\": \"39439\",\n        \"product_name\": \"SAMPLE PRODUCT 2\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false\n      }\n    ]\t\t\n  },\n  \"config\": {\n    \"shipping_method_map\": {\n      \"Expedited\": \"UPS\"\n    }\n  }\n}"
+				},
+				"url": "{{host}}/place_order"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Order Statuses",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/order_statuses?store_order_ids=5218941141094",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"order_statuses"
+					],
+					"query": [
+						{
+							"key": "store_order_ids",
+							"value": "5218941141094"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Order Refunds",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/order_refunds?updated_at_min=2023-11-19T12:00:00Z&updated_at_max=2023-11-20T23:00:00Z&app_id=current&cursor=eyJsaW1pdCI6IjIiLCJwYWdlX2luZm8iOiJleUprYVhKbFkzUnBiMjRpT2lKdVpYaDBJaXdpWm1sdVlXNWphV0ZzWDNOMFlYUjFjeUk2SW5KbFpuVnVaR1ZrSWl3aWMzUmhkSFZ6SWpvaVlXNTVJaXdpZFhCa1lYUmxaRjloZEY5dGFXNGlPaUl5TURJekxURXhMVEU1SURFeU9qQXdPakF3SUZWVVF5SXNJblZ3WkdGMFpXUmZZWFJmYldGNElqb2lNakF5TXkweE1TMHlNQ0F5TXpvd01Eb3dNQ0JWVkVNaUxDSnNZWE4wWDJsa0lqbzFNVGt5TWpnMU5EZzNNakEyTENKc1lYTjBYM1poYkhWbElqb2lNakF5TXkweE1TMHlNQ0F4Tmpvek1UbzBPUzQyTnpJNE5EWWlmUSIsInN0YXR1cyI6bnVsbH0=&updated_at_min=2023-11-22T08:00:00Z&updated_at_max=2023-11-22T09:00:00Z&limit=3",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"order_refunds"
+					],
+					"query": [
+						{
+							"key": "updated_at_min",
+							"value": "2023-11-19T12:00:00Z"
+						},
+						{
+							"key": "updated_at_max",
+							"value": "2023-11-20T23:00:00Z"
+						},
+						{
+							"key": "app_id",
+							"value": "current"
+						},
+						{
+							"key": "cursor",
+							"value": "eyJsaW1pdCI6IjIiLCJwYWdlX2luZm8iOiJleUprYVhKbFkzUnBiMjRpT2lKdVpYaDBJaXdpWm1sdVlXNWphV0ZzWDNOMFlYUjFjeUk2SW5KbFpuVnVaR1ZrSWl3aWMzUmhkSFZ6SWpvaVlXNTVJaXdpZFhCa1lYUmxaRjloZEY5dGFXNGlPaUl5TURJekxURXhMVEU1SURFeU9qQXdPakF3SUZWVVF5SXNJblZ3WkdGMFpXUmZZWFJmYldGNElqb2lNakF5TXkweE1TMHlNQ0F5TXpvd01Eb3dNQ0JWVkVNaUxDSnNZWE4wWDJsa0lqbzFNVGt5TWpnMU5EZzNNakEyTENKc1lYTjBYM1poYkhWbElqb2lNakF5TXkweE1TMHlNQ0F4Tmpvek1UbzBPUzQyTnpJNE5EWWlmUSIsInN0YXR1cyI6bnVsbH0="
+						},
+						{
+							"key": "updated_at_min",
+							"value": "2023-11-22T08:00:00Z"
+						},
+						{
+							"key": "updated_at_max",
+							"value": "2023-11-22T09:00:00Z"
+						},
+						{
+							"key": "limit",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Inventory Info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/inventory_info?variant_ids=4818543116318,40221188227174",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"inventory_info"
+					],
+					"query": [
+						{
+							"key": "variant_ids",
+							"value": "4818543116318,40221188227174"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Orders",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/orders?created_at_min=2023-11-28T01:00:00Z",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"orders"
+					],
+					"query": [
+						{
+							"key": "created_at_min",
+							"value": "2023-11-28T01:00:00Z"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cancel Order",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\t\n    \"mp_order_number\": \"5219176317030\",\n\t  \"notify_customer\": false,\n    \"order_lines\": [\n      {\n        \"mp_line_number\": \"afdafasdgasdg\",\n        \"sku\": \"39438\",\n        \"product_name\": \"SAMPLE PRODUCT\",\n        \"quantity\": 1,\n        \"unit_price\": 200,\n        \"sales_tax\": 20,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 1.95,\n        \"shipping_tax\": 0.19,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"amount_available_for_refund\": 21.98,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false,\n        \"order_line_additional_properties\": {\n          \"additionalProp1\": \"string\",\n          \"additionalProp2\": \"string\",\n          \"additionalProp3\": \"string\"\n        },\n\t\t\t  \"cancellations\":[\n\t\t\t\t  {\n\t\t\t\t\t  \"quantity_cancelled\": 1,\n\t\t\t\t\t  \"cancellation_reason\": \"out_of_stock\"\n\t\t\t\t  }\n\t\t\t  ]\t\t\t\t\n      }\n    ]\n  }"
+				},
+				"url": {
+					"raw": "{{host}}/cancel_order?created_at_min=2023-11-11T12:00:00Z",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"cancel_order"
+					],
+					"query": [
+						{
+							"key": "created_at_min",
+							"value": "2023-11-11T12:00:00Z"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fulfill Order Line",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\t\n    \"mp_order_number\": \"123456789012\",\n    \"order_lines\": [\n      {\n        \"mp_line_number\": \"ABC-123\",\n        \"sku\": \"11111\",\n        \"product_name\": \"SAMPLE PRODUCT\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false,\n\t\t\t  \"fulfillments\":[\n\t\t\t\t  {\n\t\t\t\t\t  \"quantity_shipped\": 1,\n\t\t\t\t\t  \"shipped_date\": \"2023-11-28T16:27:00Z\",\n\t\t\t\t\t\t\"carrier\": \"UPS\",\n\t\t\t\t\t\t\"tracking_number\":\"TEST-123\"\n\t\t\t\t  }\n\t\t\t  ]\t\t\t\t\n    },\n\t{\n        \"mp_line_number\": \"ABC-456\",\n        \"sku\": \"22222\",\n        \"product_name\": \"SAMPLE PRODUCT 2\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false,\n\t\t\t  \"fulfillments\":[\n\t\t\t\t  {\n\t\t\t\t\t  \"quantity_shipped\": 1,\n\t\t\t\t\t  \"shipped_date\": \"2023-11-28T16:27:00Z\",\n\t\t\t\t\t\t\"carrier\": \"UPS\",\n\t\t\t\t\t\t\"tracking_number\":\"TEST-123\"\n\t\t\t\t  }\n\t\t\t\t]\n      }\t\t\t\n    ]\n  }"
+				},
+				"url": {
+					"raw": "{{host}}/fulfill_order_lines?created_at_min=2023-11-11T12:00:00Z",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"fulfill_order_lines"
+					],
+					"query": [
+						{
+							"key": "created_at_min",
+							"value": "2023-11-11T12:00:00Z"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Refund Order Line",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/2023.5.8"
+					},
+					{
+						"key": "store-id",
+						"value": "{{store_id}}"
+					},
+					{
+						"key": "token",
+						"value": "{{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\t\n    \"mp_order_number\": \"5219520512102\",\n\t  \"currency\": \"USD\",\n\t  \"notify_customer\": false,\n\t  \"location_id\": 1,\n    \"order_lines\": [\n      {\n        \"mp_line_number\": \"13519329493094\",\n        \"sku\": \"39439\",\n        \"product_name\": \"SAMPLE PRODUCT 2\",\n        \"quantity\": 1,\n        \"unit_price\": 19.99,\n        \"sales_tax\": 1.34,\n        \"shipping_method\": \"FedEx\",\n        \"shipping_price\": 7.97,\n        \"shipping_tax\": 0.56,\n        \"discount_name\": \"\",\n        \"discount\": 0,\n        \"shipping_discount_name\": \"\",\n        \"shipping_discount\": 0,\n        \"commission\": 0,\n        \"is_tax_collected_by_marketplace\": false,\n        \"is_target_two_day\": false,\t\t\t\t\n\t\t\t  \"cancellations\":[\n\t\t\t\t  {\n\t\t\t\t\t  \"quantity_cancelled\": 1,\n\t\t\t\t\t  \"cancellation_reason\": \"out_of_stock\"\n\t\t\t\t  }\n\t\t\t  ]\t\t\t\t\n      }\n    ]\n  }"
+				},
+				"url": {
+					"raw": "{{host}}/refund_order_lines?created_at_min=2023-11-11T12:00:00Z",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"refund_order_lines"
+					],
+					"query": [
+						{
+							"key": "created_at_min",
+							"value": "2023-11-11T12:00:00Z"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
