@@ -1,5 +1,5 @@
-# Feedamp Webhook SDK
-Feedamp Webhook SDK is a sdk that allows developers to build REST apis to integrate third-party client platforms with Feedamp.
+# Shopify Orders Connector
+Shopify Orders Connector is a sdk that allows developers to build REST apis to integrate third-party client platforms with Feedamp.
 
 
 ## Requirements
