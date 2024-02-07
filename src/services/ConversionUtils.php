@@ -1,6 +1,6 @@
 <?php
 
-namespace FeedonomicsWebHookSDK\services;
+namespace ShopifyOrdersConnector\services;
 
 use DateTime;
 use DateTimeZone;

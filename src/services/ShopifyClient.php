@@ -1,8 +1,8 @@
 <?php
 
-namespace FeedonomicsWebHookSDK\services;
+namespace ShopifyOrdersConnector\services;
 
-use FeedonomicsWebHookSDK\services\ConversionUtils;
+use ShopifyOrdersConnector\services\ConversionUtils;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Client as HttpClient;

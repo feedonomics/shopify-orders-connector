@@ -1,8 +1,8 @@
 <?php
 
-namespace FeedonomicsWebHookSDK\services;
+namespace ShopifyOrdersConnector\services;
 
-use FeedonomicsWebHookSDK\exceptions\FileException;
+use ShopifyOrdersConnector\exceptions\FileException;
 
 class BatchUtils
 {

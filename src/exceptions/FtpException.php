@@ -1,6 +1,6 @@
 <?php
 
-namespace FeedonomicsWebHookSDK\exceptions;
+namespace ShopifyOrdersConnector\exceptions;
 
 use \Exception;
 

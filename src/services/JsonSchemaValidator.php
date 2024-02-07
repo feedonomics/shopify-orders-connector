@@ -1,5 +1,5 @@
 <?php
-namespace FeedonomicsWebHookSDK\services;
+namespace ShopifyOrdersConnector\services;
 
 use JsonSchema\Validator;
 use JsonSchema\SchemaStorage;

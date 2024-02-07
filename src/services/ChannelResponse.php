@@ -1,6 +1,6 @@
 <?php
 
-namespace FeedonomicsWebHookSDK\services;
+namespace ShopifyOrdersConnector\services;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;

@@ -1,10 +1,10 @@
 <?php
 
-namespace FeedonomicsWebHookSDK\services;
+namespace ShopifyOrdersConnector\services;
 
 use feedonomics\clientlibrary\Resource;
-use FeedonomicsWebHookSDK\exceptions\FileException;
-use FeedonomicsWebHookSDK\exceptions\FtpException;
+use ShopifyOrdersConnector\exceptions\FileException;
+use ShopifyOrdersConnector\exceptions\FtpException;
 
 class FTPUtilities
 {

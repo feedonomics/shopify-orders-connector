@@ -1,11 +1,11 @@
 <?php
 
-use FeedonomicsWebHookSDK\exceptions\FileException;
-use FeedonomicsWebHookSDK\exceptions\FtpException;
-use FeedonomicsWebHookSDK\services\BatchUtils;
-use FeedonomicsWebHookSDK\services\FTPUtilities;
-use FeedonomicsWebHookSDK\services\JsonSchemaValidator;
-use FeedonomicsWebHookSDK\services\ShopifyClient;
+use ShopifyOrdersConnector\exceptions\FileException;
+use ShopifyOrdersConnector\exceptions\FtpException;
+use ShopifyOrdersConnector\services\BatchUtils;
+use ShopifyOrdersConnector\services\FTPUtilities;
+use ShopifyOrdersConnector\services\JsonSchemaValidator;
+use ShopifyOrdersConnector\services\ShopifyClient;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -194,7 +194,7 @@ $app->post('/ftp_place_orders', function (Request $request, Response $response, 
     try {
         $import_handle = $ftp_utils->download($import_file);
     }catch (FileException|FtpException $e) {
-        if(get_class($e) === "FeedonomicsWebHookSDK\\exceptions\\FtpException") {
+        if(get_class($e) === "ShopifyOrdersConnector\\exceptions\\FtpException") {
             $error = "Curl error [{$e->getCode()}]: {$e->getMessage()}";
         }
         else {
@@ -246,7 +246,7 @@ $app->post('/ftp_place_orders', function (Request $request, Response $response, 
         $ftp_utils->upload($results_file_url, $results_handle);
     }catch (FileException|FtpException $e)
     {
-        if(get_class($e) === "FeedonomicsWebHookSDK\\exceptions\\FtpException") {
+        if(get_class($e) === "ShopifyOrdersConnector\\exceptions\\FtpException") {
             $error = "Curl error [{$e->getCode()}]: {$e->getMessage()}";
         }
         else {
