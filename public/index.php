@@ -323,7 +323,8 @@ $app->get('/order_statuses', function (Request $request, Response $response, $ar
 
     $status_response = $shopify_client->process_order_statuses($store_order_ids);
     $failed_request = $shopify_client->is_error_response($status_response);
-    $orders = json_decode($status_response['response_body'] ?? '', true);
+    $orders_decoded = json_decode($status_response['platform_response']['response_body'] ?? '', true);
+    $orders = $orders_decoded["orders"] ?? [];
 
     if ($failed_request || !$orders) {
         $response = $response->withStatus(502);
