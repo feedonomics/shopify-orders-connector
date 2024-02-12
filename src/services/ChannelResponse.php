@@ -2,7 +2,7 @@
 
 namespace ShopifyOrdersConnector\services;
 
-use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 
@@ -33,6 +33,10 @@ class ChannelResponse
      */
     public static function generate_error_response(RequestException $exception, ?array $request_info)
     {
+        if(is_null($exception->getResponse())) {
+            return self::generate_curl_error_response($exception, $request_info);
+        }
+
         $response_details = [
             'headers' => $exception->getResponse()->getHeaders(),
             'response_code' => $exception->getResponse()->getStatusCode(),
@@ -48,11 +52,11 @@ class ChannelResponse
     }
 
     /**
-     * @param ConnectException $exception
+     * @param TransferException $exception
      * @param array|null $request_info
      * @return array
      */
-    public static function generate_curl_error_response(ConnectException $exception, ?array $request_info)
+    public static function generate_curl_error_response(TransferException $exception, ?array $request_info)
     {
         $error_context = $exception->getHandlerContext();
         $response_details = [

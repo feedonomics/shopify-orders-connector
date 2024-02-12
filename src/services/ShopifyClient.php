@@ -3,7 +3,7 @@
 namespace ShopifyOrdersConnector\services;
 
 use ShopifyOrdersConnector\services\ConversionUtils;
-use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Client as HttpClient;
 
@@ -107,19 +107,7 @@ class ShopifyClient
                 $decoded = json_decode($raw_body, true);
                 if (!json_last_error()) {
                     $error = $decoded["errors"];
-                    $message = "";
-                    foreach ($error as $key => $value) {
-                        if (!is_string($value)) {
-                            if (count($value) == 1) {
-                                $value = $value[0];
-                            } else {
-                                $value = json_encode($value);
-                            }
-                        }
-                        $message .= "{$key}:{$value}; ";
-                    }
-                } else {
-                    $message = "DE";
+                    $message = $this->parse_response_body_errors($error);
                 }
             }
             return [
@@ -141,6 +129,30 @@ class ShopifyClient
     }
 
     /**
+     * @param $error
+     * @return string
+     */
+    private function parse_response_body_errors($error)
+    {
+        if(is_scalar($error)) {
+            return $error;
+        }
+
+        $message = "";
+        foreach ($error as $key => $value) {
+            if (!is_string($value)) {
+                if (count($value) == 1) {
+                    $value = $value[0];
+                } else {
+                    $value = json_encode($value);
+                }
+            }
+            $message .= "{$key}:{$value}; ";
+        }
+        return $message;
+    }
+
+    /**
      * @param $raw_response
      * @return int
      */
@@ -152,15 +164,11 @@ class ShopifyClient
             return 0;
         }
         $headers = $raw_response['headers'];
-        $rate_limit = $headers['HTTP_X_SHOPIFY_SHOP_API_CALL_LIMIT'][0] ?? '';
+        $rate_limit = $headers['retry-after'][0] ?? 0;
         if (!$rate_limit) {
             return 0;
         }
-
-        $parts = explode('/', $rate_limit);
-        $max_allowed = intval(trim($parts[1]), 10);
-        $request_per_sec = $max_allowed / 60;
-        return round($request_per_sec) * 10;
+        return ceil(floatval($rate_limit));
     }
 
 
@@ -1995,7 +2003,7 @@ class ShopifyClient
             $response_data = ChannelResponse::generate_successful_response($client_response, $request_info);
         } catch (RequestException $e) {
             $response_data = ChannelResponse::generate_error_response($e, $request_info);
-        } catch (ConnectException $e) {
+        } catch (TransferException $e) {
             $response_data = ChannelResponse::generate_curl_error_response($e, $request_info);
         }
         return $response_data;
@@ -2023,7 +2031,7 @@ class ShopifyClient
             $response_data = ChannelResponse::generate_successful_response($client_response, $request_info);
         } catch (RequestException $e) {
             $response_data = ChannelResponse::generate_error_response($e, $request_info);
-        } catch (ConnectException $e) {
+        } catch (TransferException $e) {
             $response_data = ChannelResponse::generate_curl_error_response($e, $request_info);
         }
         return $response_data;
