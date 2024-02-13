@@ -158,19 +158,54 @@ class ShopifyClient
      */
     private function rate_limit_wait($raw_response)
     {
-
         $response_code = $raw_response['response_code'] ?? 0;
         if ($response_code != '429') {
             return 0;
         }
-        $headers = $raw_response['headers'];
-        $rate_limit = $headers['retry-after'][0] ?? 0;
-        if (!$rate_limit) {
+
+        $headers = $this->get_response_headers($raw_response);
+
+        //This header does not seem to be sent for test stores
+        $rate_limit = $headers['retry-after'][0] ?? null;
+        if (!is_null($rate_limit)) {
+            return ceil($rate_limit);
+        }
+
+        $rate_limit = $headers['x-shopify-shop-api-call-limit'][0] ?? null;
+        if(is_null($rate_limit)) {
             return 0;
         }
-        return ceil(floatval($rate_limit));
+
+        $parts = explode('/', $rate_limit);
+        $count = intval(trim($parts[0]), 10);
+
+        // Shopify returns inaccurate values in x-shopify-shop-api-call-limit for test stores,
+        // the max_allowed is always reported as 40, but the real limit appears to be as low as 4
+        //if the count <=4 assume we are a test store and wait 15 seconds as we can only make 4 per minute
+        if($count <= 4) {
+            return 15;
     }
 
+        // if we didn't get a retry after header and the request count is more than the test store,
+        // we should not have gotten a 429. The bucket refill rate is either 2/second or 20/second, depending on the
+        // account. Going to delay sending for 2 seconds
+        return 2;
+
+    }
+
+    /**
+     * @param array $raw_response
+     * @return array
+     */
+    private function get_response_headers(array $raw_response)
+    {
+        $headers_raw = $raw_response['headers'] ?? [];
+        $headers = [];
+        foreach($headers_raw as $key => $value) {
+            $headers[strtolower($key)] = $value;
+        }
+        return $headers;
+    }
 
     /**
      * @param array $configs
