@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "<h2>Overview<\/h2>  Webhook for interfacing with FeedAMP",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "Feedamp Webhook SDK",
     "contact": {
       "email": "feedamp@feedonomics.com"
@@ -52,6 +52,20 @@
             "schema": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
             }
           }
         ],
@@ -201,6 +215,20 @@
             }
           },
           {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
+            }
+          },
+          {
             "name": "store_order_ids",
             "description": "A array (comma delimited list) of order ids to retrieve status information",
             "in": "query",
@@ -277,6 +305,20 @@
             "schema": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
             }
           },
           {
@@ -416,6 +458,20 @@
             }
           },
           {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
+            }
+          },
+          {
             "name": "variant_ids",
             "description": "A array (comma delimited list) of order id to retrieve status information",
             "in": "query",
@@ -468,7 +524,7 @@
     "\/orders": {
       "get": {
         "tags": [
-          "Orders"
+          "Marketplace Operations"
         ],
         "summary": "Get New orders",
         "description": "Get new orders that placed into the marketplace but have not started to be processed",
@@ -495,6 +551,20 @@
             }
           },
           {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
+            }
+          },
+          {
             "name": "created_at_min",
             "description": "Date the orders were created on or after",
             "in": "query",
@@ -518,7 +588,7 @@
           },
           {
             "name": "since_id",
-            "description": "The last order id retrieved from this call (nevvessary to send when getting batches beyond the 1st page)",
+            "description": "The last order id retrieved from this call (necessary to send when getting batches beyond the 1st page)",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -606,6 +676,20 @@
               "type": "string",
               "minLength": 1
             }
+          },
+          {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
+            }
           }
         ],
         "requestBody": {
@@ -678,6 +762,20 @@
             "schema": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
             }
           }
         ],
@@ -755,6 +853,20 @@
             "schema": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          {
+            "name": "debug-request",
+            "description": "If present this returns the request details that was sent ot the platform",
+            "required": false,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
             }
           }
         ],
@@ -843,7 +955,7 @@
                 },
                 "product_name": {
                   "type": "string",
-                  "description": "The product title, as displayed in the marketplce listing.",
+                  "description": "The product title, as displayed in the marketplace listing.",
                   "example": "SAMPLE PRODUCT"
                 },
                 "quantity": {
@@ -896,7 +1008,7 @@
                 },
                 "commission": {
                   "type": "number",
-                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not avaialble along with the order.  It does not mean the commission is 0."
+                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not available along with the order.  It does not mean the commission is 0."
                 },
                 "amount_available_for_refund": {
                   "type": "number",
@@ -956,6 +1068,9 @@
             "description": "The exception\/error message generated by the http client when making the request to the eCommerce platform",
             "type": "string",
             "example": "cURL error 28: Connection timed out after 20000 milliseconds"
+          },
+          "debug_request": {
+            "$ref": "#\/components\/schemas\/DebugRequest"
           }
         }
       },
@@ -1023,7 +1138,7 @@
                 },
                 "product_name": {
                   "type": "string",
-                  "description": "The product title, as displayed in the marketplce listing.",
+                  "description": "The product title, as displayed in the marketplace listing.",
                   "example": "SAMPLE PRODUCT"
                 },
                 "quantity": {
@@ -1076,7 +1191,7 @@
                 },
                 "commission": {
                   "type": "number",
-                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not avaialble along with the order.  It does not mean the commission is 0."
+                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not available along with the order.  It does not mean the commission is 0."
                 },
                 "amount_available_for_refund": {
                   "type": "number",
@@ -1153,11 +1268,60 @@
             "description": "The exception\/error message generated by the http client when making the request to the eCommerce platform",
             "type": "string",
             "example": "Client error response [url] https:\/\/DOMAIN\/URL\/enpoint.json [status code] 422 [reason phrase] Unprocessable Entity"
+          },
+          "debug_request": {
+            "$ref": "#\/components\/schemas\/DebugRequest"
+          }
+        }
+      },
+      "DebugRequest": {
+        "description": "If debugging is enabled, the information used to make the request is returned",
+        "type": "object",
+        "properties": {
+          "method": {
+            "description": "The HTTP verb used to make the request",
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "DELETE"
+            ]
+          },
+          "uri": {
+            "description": "The URI of the request",
+            "type": "string"
+          },
+          "headers": {
+            "description": "A list of key value pairs that are the header field and the header value returned in the HTTP request.",
+            "type": "object",
+            "additionalProperties": {},
+            "example": {
+              "Content-Type": [
+                "application\/json; charset=utf-8"
+              ],
+              "Connection": [
+                "keep-alive"
+              ]
+            }
+          },
+          "query_params": {
+            "description": "List of any query parameters used when making the request to the platform. Field is only present when query parameters are used in the request to the platform.",
+            "additionalProperties": {},
+            "example": {
+              "status": "any",
+              "limit": 255
+            }
+          },
+          "body": {
+            "description": "The json sent to as part of the request to the patform. Field is only present when sending json to the the platform.",
+            "type": "string",
+            "example": "{\"order\":{\"key\":\"value\"}}"
           }
         }
       },
       "InventoryInfoSuccessResponse": {
-        "description": "The response from a call to get invertory information for a list of variant ids",
+        "description": "The response from a call to get invertory information for a list of variant ids.",
         "type": "object",
         "properties": {
           "inventory": {
@@ -1522,7 +1686,7 @@
                 },
                 "product_name": {
                   "type": "string",
-                  "description": "The product title, as displayed in the marketplce listing.",
+                  "description": "The product title, as displayed in the marketplace listing.",
                   "example": "SAMPLE PRODUCT"
                 },
                 "quantity": {
@@ -1532,7 +1696,7 @@
                 },
                 "unit_price": {
                   "type": "number",
-                  "description": "The price per product (not total, not inlcuding tax, shipping, or discounts).",
+                  "description": "The price per product (not total, not including tax, shipping, or discounts).",
                   "example": 200
                 },
                 "sales_tax": {
@@ -1575,7 +1739,7 @@
                 },
                 "commission": {
                   "type": "number",
-                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not avaialble along with the order.  It does not mean the commission is 0."
+                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not available along with the order.  It does not mean the commission is 0."
                 },
                 "amount_available_for_refund": {
                   "type": "number",
@@ -1961,6 +2125,11 @@
                 "description": "Set to true to store all additional information fields (Customer Order Number, Delivery Notes, Marketplace Promotion) in the Additional Details section instead of the Notes section.",
                 "type": "boolean",
                 "default": false
+              },
+              "marketplace_fulfilled_clear_cust_info": {
+                "description": "Clear\/replace customer info w\/ warning for marketplace fulfilled orders",
+                "type": "boolean",
+                "default": true
               }
             }
           }
@@ -2016,7 +2185,7 @@
                 },
                 "product_name": {
                   "type": "string",
-                  "description": "The product title, as displayed in the marketplce listing.",
+                  "description": "The product title, as displayed in the marketplace listing.",
                   "example": "SAMPLE PRODUCT"
                 },
                 "quantity": {
@@ -2026,7 +2195,7 @@
                 },
                 "unit_price": {
                   "type": "number",
-                  "description": "The price per product (not total, not inlcuding tax, shipping, or discounts).",
+                  "description": "The price per product (not total, not including tax, shipping, or discounts).",
                   "example": 200
                 },
                 "sales_tax": {
@@ -2069,7 +2238,7 @@
                 },
                 "commission": {
                   "type": "number",
-                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not avaialble along with the order.  It does not mean the commission is 0."
+                  "description": "Commission on the sale that will be taken by the marketplace. Note:  If this field is empty, it only means the information is not available along with the order.  It does not mean the commission is 0."
                 },
                 "amount_available_for_refund": {
                   "type": "number",
@@ -2234,6 +2403,9 @@
             "description": "The raw HTTP response body returned by the request to the eCommerce platform.",
             "type": "string",
             "example": "{\n   \"order\":\n}"
+          },
+          "debug_request": {
+            "$ref": "#\/components\/schemas\/DebugRequest"
           }
         }
       },

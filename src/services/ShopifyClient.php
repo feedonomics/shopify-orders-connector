@@ -229,6 +229,7 @@ class ShopifyClient
             'use_mp_product_name' => true,
             'use_note_attributes' => false,
             'include_order_line_additional_properties' => false,
+            'marketplace_fulfilled_restrict_customer_info' => false,
         ];
         if (!$configs) {
             return $defaults;
@@ -255,6 +256,7 @@ class ShopifyClient
         $shipping_phone = $order['shipping_phone'] ?? '';
 
         $marketplace_fulfilled = $order['marketplace_fulfilled'] ?? false;
+        $marketplace_fulfilled_restrict_data = $marketplace_fulfilled && $config['marketplace_fulfilled_restrict_customer_info'];
 
         $note_attributes = [];
         $order_note = "Marketplace: {$order['marketplace_name']}" . PHP_EOL .
@@ -308,18 +310,21 @@ class ShopifyClient
                 break;
         }
 
+        $address2 = empty($order['shipping_address3'])
+            ? $order['shipping_address2']
+            : "{$order['shipping_address2']}, {$order['shipping_address3']}";
+
         if ($marketplace_fulfilled) {
             $order_note .= PHP_EOL . self::MARKETPLACE_FULFILL_PLACE_HOLDER;
             $note_attributes['Marketplace Fulfilled'] = self::MARKETPLACE_FULFILL_PLACE_HOLDER;
-            $address2 = '';
-            $customer_phone = '';
-            $shipping_phone = "";
-            $customer_email = "MARKETPLACE_FULFILLED" . "_" . $config['dummy_customer_email'];
-        } else {
-            $address2 = empty($order['shipping_address3'])
-                ? $order['shipping_address2']
-                : "{$order['shipping_address2']}, {$order['shipping_address3']}";
+            if($marketplace_fulfilled_restrict_data) {
+                $address2 = '';
+                $customer_phone = '';
+                $shipping_phone = "";
+                $customer_email = "MARKETPLACE_FULFILLED" . "_" . $config['dummy_customer_email'];
+            }
         }
+
         $shopify_order = [
             'currency' => $order['currency'] ?? '',
             'email' => $customer_email,
@@ -327,16 +332,16 @@ class ShopifyClient
             'phone' => $customer_phone,
             'note' => $order_note,
             'shipping_address' => [
-                'address1' => $marketplace_fulfilled
+                'address1' => $marketplace_fulfilled_restrict_data
                     ? self::MARKETPLACE_FULFILL_PLACE_HOLDER
                     : $order['shipping_address1'],
                 'address2' => $address2,
-                'city' => $marketplace_fulfilled ? '' : $order['shipping_city'],
+                'city' => $marketplace_fulfilled_restrict_data ? '' : $order['shipping_city'],
                 'phone' => $shipping_phone,
                 'zip' => $order['shipping_postal_code'],
                 'province_code' => ConversionUtils::convert_usa_state_to_2_chars($order['shipping_state']),
                 'country_code' => ConversionUtils::convert_country_code_to_ISO2($order['shipping_country_code']),
-                'name' => $marketplace_fulfilled
+                'name' => $marketplace_fulfilled_restrict_data
                     ? self::MARKETPLACE_FULFILL_PLACE_HOLDER
                     : $order['shipping_full_name'],
             ],
@@ -358,18 +363,18 @@ class ShopifyClient
         $order_has_complete_billing_info = $this->is_order_billing_info_complete($order);
         if ($order_has_complete_billing_info) {
             $shopify_order['billing_address'] = [
-                'address1' => $marketplace_fulfilled
+                'address1' => $marketplace_fulfilled_restrict_data
                     ? self::MARKETPLACE_FULFILL_PLACE_HOLDER
                     : $order['billing_address1'],
-                'city' => $marketplace_fulfilled ? '' : $order['billing_city'],
+                'city' => $marketplace_fulfilled_restrict_data ? '' : $order['billing_city'],
                 'phone' => $order['billing_phone'] ?? '',
                 'zip' => $order['billing_postal_code'],
                 'province_code' => ConversionUtils::convert_usa_state_to_2_chars($order['billing_state']),
                 'country_code' => ConversionUtils::convert_country_code_to_ISO2($order['billing_country_code']),
-                'name' => $marketplace_fulfilled ? self::MARKETPLACE_FULFILL_PLACE_HOLDER : $order['billing_full_name'],
+                'name' => $marketplace_fulfilled_restrict_data ? self::MARKETPLACE_FULFILL_PLACE_HOLDER : $order['billing_full_name'],
             ];
 
-            if ($marketplace_fulfilled) {
+            if ($marketplace_fulfilled_restrict_data) {
                 $billing_address_line_2 = '';
             } else {
                 $billing_address_line_2 = $order['billing_address3'] && $order['billing_address2'] ?
