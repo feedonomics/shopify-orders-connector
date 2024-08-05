@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: <h2>Overview</h2>  Webhook for interfacing with FeedAMP
-  version: 0.1.0
+  version: 0.1.1
   title: Feedamp Webhook SDK
   contact:
     email: feedamp@feedonomics.com
@@ -886,7 +886,7 @@ components:
           additionalProperties: {}
           example:
             {
-              "Content-Type": ["application\/json; charset=utf-8"],
+              "Content-Type": ["application/json; charset=utf-8"],
               "Connection": ["keep-alive"],
             }
         response_code:
@@ -924,7 +924,7 @@ components:
           additionalProperties: {}
           example:
             {
-              "Content-Type": ["application\/json; charset=utf-8"],
+              "Content-Type": ["application/json; charset=utf-8"],
               "Connection": ["keep-alive"],
             }
         query_params:
@@ -1587,6 +1587,10 @@ components:
               description: Set to true to store all additional information fields (Customer Order Number, Delivery Notes, Marketplace Promotion) in the Additional Details section instead of the Notes section.
               type: boolean
               default: false
+            marketplace_fulfilled_restrict_customer_info:
+              description: If enabled, when placing a marketplace fulfilled order, replace in billing & shipping fields  (name & address) the value w/ "MARKETPLACE FULFILLED - DO NOT FULFILL". Also clear out the address2,city, & phone fields.
+              type: boolean
+              default: true
       required:
         - order
 
@@ -1799,7 +1803,7 @@ components:
           additionalProperties: {}
           example:
             {
-              "Content-Type": ["application\/json; charset=utf-8"],
+              "Content-Type": ["application/json; charset=utf-8"],
               "Connection": ["keep-alive"],
             }
         response_code:
