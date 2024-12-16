@@ -476,7 +476,13 @@ $app->get('/inventory_info', function (Request $request, Response $response, $ar
     $client = new HttpClient();
     $shopify_client = new ShopifyClient($store_id, $access_token, $client, $debug_request);
 
-    $inventory = $shopify_client->process_inventory_info($variant_ids);
+    $use_graphql = $query_params['enable_graphql'] ?? false;
+    if($use_graphql) {
+        $inventory = $shopify_client->process_graphql_inventory_info($variant_ids);
+    }
+    else{
+        $inventory = $shopify_client->process_inventory_info($variant_ids);
+    }
 
     $failed_request = isset($inventory['platform_response']);
     if ($failed_request) {
