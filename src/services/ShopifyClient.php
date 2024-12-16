@@ -11,6 +11,7 @@ class ShopifyClient
 {
 
     const API_VERSION = "2023-10";
+    const GRAPHQL_VERSION="2024-10";
     const MAX_ORDER_BATCH_SIZE = 250;
     const MAX_ORDER_PAGES = 50;
     const MAX_REFUND_PAGE_LIMIT = 1000;
@@ -230,6 +231,7 @@ class ShopifyClient
             'use_note_attributes' => false,
             'include_order_line_additional_properties' => false,
             'marketplace_fulfilled_restrict_customer_info' => false,
+            'enable_graphql' => false,
         ];
         if (!$configs) {
             return $defaults;
@@ -1320,6 +1322,90 @@ class ShopifyClient
         return $response;
     }
 
+    public function process_graphql_inventory_info(array $variant_ids)
+    {
+        $response = [
+            'inventory' => []
+        ];
+        foreach ($variant_ids as $variant_id) {
+            $inventory_response = $this->get_variant_product_graphql($variant_id);
+            if ($this->is_graphlql_error_response($inventory_response)) {
+                return [
+                    'error' => 'Request to get inventory was not successful',
+                    'platform_response' => $inventory_response
+                ];
+            }
+
+            $variant_info = json_decode($inventory_response['response_body'], true);
+            if (!$variant_info) {
+                return [
+                    'error' => 'Invalid json returned in graphql response',
+                    "platform_response" => $inventory_response
+                ];
+            }
+            if (!($variant_info['data']['productVariant'] ?? null)) {
+                return [
+                    'error' => 'No product variant info in graphql response',
+                    "platform_response" => $inventory_response
+                ];
+            }
+
+            $product_variant = $variant_info['data']['productVariant'];
+
+            $sku = $product_variant['inventoryItem']['sku'] ?? '';
+
+            $product_id = $this->get_product_id($product_variant);
+
+            $inventory_qty = $this->get_inventory_quantity($product_variant);
+
+            $info = [
+                'stock' => $inventory_qty,
+                'sku' => $sku,
+            ];
+
+            if ($product_id) {
+                $info['product_id'] = $product_id;
+                $info['url'] = "https://admin.shopify.com/store/{$this->store_id}/products/{$product_id}/variants/{$variant_id}";
+            }
+            $response['inventory'][$variant_id] = $info;
+        }
+        return $response;
+    }
+
+    /**
+     * @param $product_variant
+     * @return string
+     */
+    private function get_product_id($product_variant)
+    {
+        $product_id = $product_variant['product']['legacyResourceId'] ?? '';
+        if (!$product_id) {
+            $gid = $product_variant['product']['id'] ?? '';
+            if ($gid) {
+                $parts = explode('/', $gid);
+                $product_id = end($parts);
+            }
+        }
+        return $product_id;
+    }
+
+    /**
+     * @param $product_variant
+     * @return int
+     */
+    private function get_inventory_quantity($product_variant)
+    {
+        $inventory_locations = $product_variant["inventoryItem"]["inventoryLevels"]["edges"] ?? [];
+        $inventory_qty = 0;
+        foreach($inventory_locations as $location) {
+            $quantities = $location['quantities'];
+            if($quantities["name"] !== "available") {
+                continue;
+            }
+            $inventory_qty += intval($quantities["quantity"] ?? 0);
+        }
+        return $inventory_qty;
+    }
 
     /**
      * @param string $start_date
@@ -1961,6 +2047,45 @@ class ShopifyClient
         return $this->get($request_url, $options);
     }
 
+
+    private function get_variant_product_graphql($variant_id)
+    {
+        $headers = $this->get_headers();
+        $query = <<<END_GRAPHQL
+{
+    productVariant(id: "gid://shopify/ProductVariant/{$variant_id}") {
+        inventoryItem {
+            id
+            sku
+            inventoryLevels(first:100){
+                edges{
+                    node{
+                        quantities(names:"available") {
+                            name
+							quantity
+						}
+                    }
+                }
+			}
+        }
+		product{
+			id
+			legacyResourceId
+		}
+  }
+}
+END_GRAPHQL;
+
+        $options = [
+            'headers' => $headers,
+            'json' => [
+                "query"=>$query
+            ]
+        ];
+        $request_url = $this->get_graphql_url();
+        return $this->post($request_url, $options);
+    }
+
     /**
      * @param $query_params
      * @return array
@@ -1999,6 +2124,11 @@ class ShopifyClient
     private function get_api_base_url(string $api_version = self::API_VERSION)
     {
         return "https://{$this->store_id}.myshopify.com/admin/api/{$api_version}";
+    }
+
+    private function get_graphql_url(string $graphql_version = self::GRAPHQL_VERSION)
+    {
+        return "https://{$this->store_id}.myshopify.com/admin/api/{$graphql_version}/graphql.json";
     }
 
     /**
@@ -2103,4 +2233,24 @@ class ShopifyClient
         $http_response = $response['response_code'] ?? 0;
         return $http_response < 200 || $http_response > 300;
     }
+
+    public function is_graphlql_error_response(array $response)
+    {
+        if (isset($response['platform_response'])) {
+            $response = $response['platform_response'];
+        }
+        $http_response = $response['response_code'] ?? 0;
+        if ($http_response < 200 || $http_response > 300) {
+            return true;
+        };
+        // The GraphQL seems to return HTTP status 200 for all
+        // if there was an error with the query itself it will return an json response with a property errors
+        // // {"errors":[]}  if we detect that in the response treat the response as being an error
+        $response = json_decode($response['response_body'],true);
+        if (isset($response["errors"])) {
+            return true;
+        }
+        return false;
+    }
+
 }

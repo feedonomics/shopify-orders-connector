@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: <h2>Overview</h2>  Webhook for interfacing with FeedAMP
-  version: 0.1.1
+  version: 0.1.2
   title: Feedamp Webhook SDK
   contact:
     email: feedamp@feedonomics.com
@@ -316,6 +316,12 @@ paths:
               type: integer
             minItems: 1
             maxItems: 250
+        - name: enable_graphql
+          description: Enable graphql for inventory lookup
+          in: query
+          required: false
+          schema:
+            type: boolean
 
       responses:
         '200':
@@ -1591,6 +1597,10 @@ components:
               description: If enabled, when placing a marketplace fulfilled order, replace in billing & shipping fields  (name & address) the value w/ "MARKETPLACE FULFILLED - DO NOT FULFILL". Also clear out the address2,city, & phone fields.
               type: boolean
               default: true
+            enable_graphql:
+              description: If enabled lookups will use the Shopify Graphql endpoint instead of the rest api endpoint
+              type: boolean
+              default: false
       required:
         - order
 
