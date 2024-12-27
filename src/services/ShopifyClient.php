@@ -9,6 +9,7 @@ use GuzzleHttp\Client as HttpClient;
 
 class ShopifyClient
 {
+    const MAX_RATE_LIMIT_ATTEMPTS = 5;
 
     const API_VERSION = "2023-10";
     const GRAPHQL_VERSION="2024-10";
@@ -88,15 +89,17 @@ class ShopifyClient
      */
     public function process_place_order_retry_rate_limits(array $order_data)
     {
+        $attempt_number = 0;
         do {
             $retry = false;
+            $attempt_number++;
             $raw_response = $this->process_place_order(["order" => $order_data, 'config' => []]);
 
             if (!$this->is_error_response($raw_response)) {
                 continue;
             }
             //look for throttle
-            $wait = $this->rate_limit_wait($raw_response);
+            $wait = $this->rate_limit_wait($raw_response, $attempt_number);
             if ($wait) {
                 sleep($wait);
                 $retry = true;
@@ -117,7 +120,7 @@ class ShopifyClient
                 "status" => "ERROR",
                 "message" => $message,
             ];
-        } while ($retry);
+        } while ($retry && $attempt_number <= self::MAX_RATE_LIMIT_ATTEMPTS);
 
         $raw_body = $raw_response['response_body'] ?? "";
         $cp_response = json_decode($raw_body, true);
@@ -155,10 +158,13 @@ class ShopifyClient
 
     /**
      * @param $raw_response
+     * @param $attempt_number
      * @return int
      */
-    private function rate_limit_wait($raw_response)
+    private function rate_limit_wait($raw_response, $attempt_number)
     {
+        $default_rate_limit = 2;
+
         $response_code = $raw_response['response_code'] ?? 0;
         if ($response_code != '429') {
             return 0;
@@ -172,9 +178,12 @@ class ShopifyClient
             return ceil($rate_limit);
         }
 
+        //This header appears to also sometimes be absent
+        //A 429 should always invoke a delay
         $rate_limit = $headers['x-shopify-shop-api-call-limit'][0] ?? null;
         if(is_null($rate_limit)) {
-            return 0;
+            //use exponential backoff with starting with 2 seconds.
+            return pow($default_rate_limit,$attempt_number);
         }
 
         $parts = explode('/', $rate_limit);
@@ -190,7 +199,7 @@ class ShopifyClient
         // if we didn't get a retry after header and the request count is more than the test store,
         // we should not have gotten a 429. The bucket refill rate is either 2/second or 20/second, depending on the
         // account. Going to delay sending for 2 seconds
-        return 2;
+        return $default_rate_limit;
 
     }
 
