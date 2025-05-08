@@ -241,6 +241,7 @@ class ShopifyClient
             'include_order_line_additional_properties' => false,
             'marketplace_fulfilled_restrict_customer_info' => false,
             'enable_graphql' => false,
+            'use_mp_order_number_as_name' => false,
         ];
         if (!$configs) {
             return $defaults;
@@ -369,6 +370,9 @@ class ShopifyClient
         if ($config['use_note_attributes']) {
             $shopify_order['note'] = '';
             $shopify_order['note_attributes'] = $note_attributes;
+        }
+        if ($config['use_mp_order_number_as_name']) {
+            $shopify_order['name'] = $order['mp_order_number'];
         }
 
         $order_has_complete_billing_info = $this->is_order_billing_info_complete($order);

@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "description": "<h2>Overview<\/h2>  Webhook for interfacing with FeedAMP",
-        "version": "0.1.2",
+        "version": "0.1.3",
         "title": "Feedamp Webhook SDK",
         "contact": {
             "email": "feedamp@feedonomics.com"
@@ -2142,6 +2142,11 @@
                             },
                             "enable_graphql": {
                                 "description": "If enabled lookups will use the Shopify Graphql endpoint instead of the rest api endpoint",
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "use_mp_order_number_as_name": {
+                                "description": "If enabled, Marketplace Order Number will be submitted as the value for Name field when placing the Order.",
                                 "type": "boolean",
                                 "default": false
                             }
