@@ -11,7 +11,7 @@ class ShopifyClient
 {
     const MAX_RATE_LIMIT_ATTEMPTS = 5;
 
-    const API_VERSION = "2023-10";
+    const API_VERSION = "2025-10";
     const GRAPHQL_VERSION="2024-10";
     const MAX_ORDER_BATCH_SIZE = 250;
     const MAX_ORDER_PAGES = 50;
@@ -421,12 +421,14 @@ class ShopifyClient
         $write_customization_info_header = true;
         $customization_info = '';
 
+        $tax_collected_by_marketplace = null;
         foreach ($order['order_lines'] as $order_line) {
             $quantity = isset($order_line['quantity']) ? (int)$order_line['quantity'] : 0;
             $unit_price = isset($order_line['unit_price']) ? (float)$order_line['unit_price'] : 0.0;
             $sales_tax = isset($order_line['sales_tax']) ? (float)$order_line['sales_tax'] : 0.0;
 
             $taxable = isset($order_line['sales_tax']) && (float)$order_line['sales_tax'] > 0;
+            $tax_collected_by_marketplace = $order_line['is_tax_collected_by_marketplace'] ?? null;
 
             $total_amount += $unit_price * $quantity;
             $total_amount += $sales_tax;
@@ -464,6 +466,7 @@ class ShopifyClient
                     'price' => $sales_tax,
                     'title' => 'Sales Tax',
                     'rate' => (float)number_format($tax_rate, 4, '.', ''),
+                    'channel_liable' => $tax_collected_by_marketplace !== false, //false only if is_tax_collected_by_marketplace is explicitly set to false
                 ];
 
                 $line_item['tax_lines'] = [
@@ -525,6 +528,7 @@ class ShopifyClient
                         'price' => $shipping_tax,
                         'title' => 'Sales Tax',
                         'rate' => (float)number_format($shipping_tax_rate, 4, '.', ''),
+                        'channel_liable' => $tax_collected_by_marketplace !== false, //false only if is_tax_collected_by_marketplace is explicitly set to false
                     ]
                 ];
 
@@ -573,6 +577,7 @@ class ShopifyClient
                     'price' => $total_shipping_tax,
                     'title' => 'Sales Tax',
                     'rate' => 0.0,
+                    'channel_liable' => $tax_collected_by_marketplace !== false, //false only if is_tax_collected_by_marketplace is explicitly set to false
                 ];
 
                 $total_excluding_shipping_and_tax = $total_amount - $total_shipping_cost - $total_tax;
