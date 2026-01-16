@@ -12,7 +12,7 @@ class ShopifyClient
     const MAX_RATE_LIMIT_ATTEMPTS = 5;
 
     const API_VERSION = "2025-10";
-    const GRAPHQL_VERSION="2024-10";
+    const GRAPHQL_VERSION="2025-10";
     const MAX_ORDER_BATCH_SIZE = 250;
     const MAX_ORDER_PAGES = 50;
     const MAX_REFUND_PAGE_LIMIT = 1000;
