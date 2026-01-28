@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: <h2>Overview</h2>  Webhook for interfacing with FeedAMP
-  version: 0.1.3
+  version: 0.1.4
   title: Feedamp Webhook SDK
   contact:
     email: feedamp@feedonomics.com
@@ -1605,6 +1605,13 @@ components:
               description: If enabled, Marketplace Order Number will be submitted as the value for Name field when placing the Order.
               type: boolean
               default: false
+            inventory_behaviour:
+              description: >-
+                Note: Specify the Shopify inventory_behaviour method to use when placing orders.
+              type: string
+              enum: ['decrement_obeying_policy', 'decrement_ignoring_policy', 'bypass']
+              default: 'decrement_obeying_policy'
+
       required:
         - order
 

@@ -28,6 +28,10 @@ class ShopifyClient
         self::MARKETPLACE_ORDER_NUMBER
     ];
 
+    const INVENTORY_DECREMENT_IGNORING_POLICY = 'decrement_ignoring_policy';
+    const INVENTORY_DECREMENT_OBEYING_POLICY = 'decrement_obeying_policy';
+    const INVENTORY_BYPASS = 'bypass';
+
     const FINANCIAL_STATUSES = ['partially_refunded', 'refunded'];
     const TRANSACTION_TYPE_SALE = 'sale';
 
@@ -242,6 +246,7 @@ class ShopifyClient
             'marketplace_fulfilled_restrict_customer_info' => false,
             'enable_graphql' => false,
             'use_mp_order_number_as_name' => false,
+            'inventory_behaviour' => self::INVENTORY_DECREMENT_OBEYING_POLICY,
         ];
         if (!$configs) {
             return $defaults;
@@ -650,7 +655,9 @@ class ShopifyClient
             $shopify_order['currency'] = $config['default_currency'];
         }
 
-        $shopify_order['inventory_behaviour'] = $marketplace_fulfilled ? 'bypass' : 'decrement_obeying_policy';
+        $inventory_behaviour = $config['inventory_behaviour'];
+        $shopify_order['inventory_behaviour'] = $marketplace_fulfilled ? self::INVENTORY_BYPASS : $inventory_behaviour;
+
         return ["order" => $shopify_order];
     }
 
