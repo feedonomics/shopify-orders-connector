@@ -5,6 +5,7 @@ use ShopifyOrdersConnector\exceptions\FtpException;
 use ShopifyOrdersConnector\services\BatchUtils;
 use ShopifyOrdersConnector\services\FTPUtilities;
 use ShopifyOrdersConnector\services\JsonSchemaValidator;
+use ShopifyOrdersConnector\services\OrderUtils;
 use ShopifyOrdersConnector\services\ShopifyClient;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -96,7 +97,8 @@ $app->post('/place_order', function (Request $request, Response $response, $args
                 $order_data,
                 "PlaceOrder",
                 $ignore_validation_errors
-            )
+            ),
+            OrderUtils::validate_place_order_variant_ids($order_data)
         );
     }
 
