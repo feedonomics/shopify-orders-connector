@@ -111,4 +111,37 @@ class OrderUtils
         }
         return $fulfillment_orders_map;
     }
+
+    /**
+     * Without the marketplace product name, each line item must reference a Shopify variant,
+     * so reject missing or non-numeric skus (sent to Shopify as variant_id) before placing the order.
+     * @param array $order_data
+     * @return array validation errors in the same format as JsonSchemaValidator
+     */
+    public static function validate_place_order_variant_ids(array $order_data)
+    {
+        if ($order_data['config']['use_mp_product_name'] ?? true) {
+            return [];
+        }
+
+        $errors = [];
+        foreach ($order_data['order']['order_lines'] ?? [] as $index => $order_line) {
+            $variant_id = trim((string)($order_line['sku'] ?? ''));
+            $property = "order.order_lines[{$index}].sku";
+
+            if ($variant_id === '') {
+                $errors[] = [
+                    'code' => JsonSchemaValidator::MISSING_REQUIRED_FIELD,
+                    'message' => "'{$property}' Order line is missing Shopify variant id (sku field).",
+                ];
+            } elseif (preg_match('/\D/', $variant_id)) {
+                $errors[] = [
+                    'code' => JsonSchemaValidator::FIELD_INVALID_VALUE,
+                    'message' => "'{$property}' Variant ID must be numeric. Configure product master export and order transformers to map marketplace skus to Shopify variants.",
+                ];
+            }
+        }
+
+        return $errors;
+    }
 }
