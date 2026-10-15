@@ -151,7 +151,7 @@ class BatchUtils
         $orders = [];
         $validation_errors = [];
 
-        $header_columns = fgetcsv($file);
+        $header_columns = fgetcsv($file, 0, ',', '"', '\\');
 
         $header_count = count($header_columns);
         $additional_fields = array_diff($header_columns, self::PLACEMENT_FIELDS);
@@ -170,7 +170,7 @@ class BatchUtils
 
         $line_number = 0;
         $do_not_process = [];
-        while ($line = fgetcsv($file)) {
+        while ($line = fgetcsv($file, 0, ',', '"', '\\')) {
             $line_number++;
             if (count($line) != $header_count) {
                 $mp_order_number = $line[$mp_order_number_index];

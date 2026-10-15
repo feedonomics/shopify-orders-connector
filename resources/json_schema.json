@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "<h2>Overview<\/h2>  Webhook for interfacing with FeedAMP",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "title": "Feedamp Webhook SDK",
     "contact": {
       "email": "feedamp@feedonomics.com"
@@ -163,7 +163,7 @@
             }
           },
           "400": {
-            "description": "The request sent to this api failed to validate",
+            "description": "The request sent to this api failed to validate. This includes an import_url or resultfile_url with a path that has a '..' segment, which is a FIELD_INVALID_VALUE error.",
             "content": {
               "application\/json": {
                 "schema": {
@@ -921,9 +921,429 @@
           }
         }
       }
+    },
+    "\/v2\/place_order": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Place an order using the Shopify GraphQL API",
+        "description": "Same request as \/place_order. The body of the platform_response is the raw JSON returned by the Shopify GraphQL orderCreate mutation. The request is treated as failed (502) if the response has errors or orderCreate.userErrors.\n",
+        "operationId": "placeOrderV2",
+        "parameters": [
+          {
+            "$ref": "#\/components\/parameters\/StoreId"
+          },
+          {
+            "$ref": "#\/components\/parameters\/Token"
+          },
+          {
+            "$ref": "#\/components\/parameters\/DebugRequest"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application\/json": {
+              "schema": {
+                "$ref": "#\/components\/schemas\/PlaceOrder"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The order was placed",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/ReportSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request sent to this api failed to validate",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/RequestValidationResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The request to the ecommerce platform failed",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/ReportedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "\/v2\/ftp_place_orders": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "FTP bulk order placement using the Shopify GraphQL API",
+        "description": "Same request and results file as \/ftp_place_orders, but the orders are placed with the Shopify GraphQL API",
+        "operationId": "bulkImportPlaceOrdersV2",
+        "parameters": [
+          {
+            "$ref": "#\/components\/parameters\/StoreId"
+          },
+          {
+            "$ref": "#\/components\/parameters\/Token"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application\/json": {
+              "schema": {
+                "$ref": "#\/components\/schemas\/FTPConfiguration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The orders were placed and the results file was uploaded",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/ReportFTPSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request sent to this api failed to validate. This includes an import_url or resultfile_url with a path that has a '..' segment, which is a FIELD_INVALID_VALUE error.",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/RequestValidationResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The request to the process the ftp file failed",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/ReportFTPErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "\/v2\/order_statuses": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get order fulfillment & cancellation data using the Shopify GraphQL API",
+        "description": "Same request and response as \/order_statuses, using the Shopify GraphQL API, except that each of the fulfillments of an order line also has the fulfillment_id, the id of the fulfillment in Shopify. The platform_response has the merged GraphQL responses of Shopify, {\"data\": {\"orders\": [...]}}, with null for an order that was not found.\n",
+        "operationId": "orderStatusesV2",
+        "parameters": [
+          {
+            "$ref": "#\/components\/parameters\/StoreId"
+          },
+          {
+            "$ref": "#\/components\/parameters\/Token"
+          },
+          {
+            "$ref": "#\/components\/parameters\/DebugRequest"
+          },
+          {
+            "name": "store_order_ids",
+            "description": "A array (comma delimited list) of order ids to retrieve status information",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 1,
+              "maxItems": 250
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request to the ecommerce platform was made",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/OrderStatusesV2SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request sent to this api failed to validate",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/RequestValidationResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The request to the ecommerce platform failed, or none of the orders were found",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/ReportedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "\/v2\/order_refunds": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get refunded orders using the Shopify GraphQL API",
+        "description": "Same request and response as \/order_refunds, using the Shopify GraphQL API. A page has at most 25 orders. If there are more orders the response has a cursor to pass to the next request. The platform_response has the merged GraphQL responses of Shopify, {\"data\": {\"orders\": [...]}}.\n",
+        "operationId": "orderRefundsV2",
+        "parameters": [
+          {
+            "$ref": "#\/components\/parameters\/StoreId"
+          },
+          {
+            "$ref": "#\/components\/parameters\/Token"
+          },
+          {
+            "$ref": "#\/components\/parameters\/DebugRequest"
+          },
+          {
+            "name": "updated_at_min",
+            "description": "Required unless a cursor is provided",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "updated_at_max",
+            "description": "Required unless a cursor is provided",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 250
+            }
+          },
+          {
+            "name": "attribution_app_id",
+            "description": "Only orders attributed to the app. Use current for the app making the request.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "description": "The cursor from the previous response",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ids_only",
+            "description": "Only return the ids of the orders with refunds, in order_ids, with pages of up to 250 orders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "order_id",
+            "description": "Return the refunds of the order with this Shopify id instead of searching. The dates are not needed.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request to the ecommerce platform was made",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/OrderRefundsSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request sent to this api failed to validate",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/RequestValidationResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The request to the ecommerce platform failed",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "description": "Error message of what occurred during processing the requests from the platform.",
+                      "type": "string"
+                    },
+                    "platform_response": {
+                      "description": "The results of the last request made to the platform",
+                      "oneOf": [
+                        {
+                          "$ref": "#\/components\/schemas\/HttpErrorResponse"
+                        },
+                        {
+                          "$ref": "#\/components\/schemas\/CurlErrorResponse"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "\/v2\/inventory_info": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get variant inventory using the Shopify GraphQL API",
+        "description": "Same request as \/inventory_info, using the Shopify GraphQL API. If some of the variants could not be retrieved the response has the inventory of the ones that could, and the ids of the ones that could not in failed_ids. It is only an error (502) if none of the variants could be retrieved.",
+        "operationId": "inventoryInfoV2",
+        "parameters": [
+          {
+            "$ref": "#\/components\/parameters\/StoreId"
+          },
+          {
+            "$ref": "#\/components\/parameters\/Token"
+          },
+          {
+            "$ref": "#\/components\/parameters\/DebugRequest"
+          },
+          {
+            "name": "variant_ids",
+            "description": "A array (comma delimited list) of variant ids to retrieve inventory information",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 1,
+              "maxItems": 250
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request to the ecommerce platform was made",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/InventoryInfoV2SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request sent to this api failed to validate",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/RequestValidationResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The request to the ecommerce platform failed",
+            "content": {
+              "application\/json": {
+                "schema": {
+                  "$ref": "#\/components\/schemas\/ReportedError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
+    "parameters": {
+      "StoreId": {
+        "name": "store-id",
+        "description": "The id identifies the shop instance",
+        "required": true,
+        "in": "header",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "Token": {
+        "name": "token",
+        "description": "The authorization token for the shop",
+        "required": true,
+        "in": "header",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "DebugRequest": {
+        "name": "debug-request",
+        "description": "If present this returns the request details that was sent ot the platform",
+        "required": false,
+        "in": "header",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ],
+          "default": "false"
+        }
+      }
+    },
     "schemas": {
       "CancelOrder": {
         "description": "Fulfillment information for an order",
@@ -1088,12 +1508,12 @@
         "type": "object",
         "properties": {
           "import_url": {
-            "description": "The full url to the file on the ftp server",
+            "description": "The full url to the file on the ftp server. The path must not have a '..' segment, also if it is url encoded, or the request fails validation.",
             "type": "string",
             "example": "sftp:\/\/myserver.domain.local\/orders\/place\/2024-01-01-12_00_00_mymarketplace.csv"
           },
           "resultfile_url": {
-            "description": "The full url to the directory on the ftp server where the result file (containing the response for each order placed) will be uploaded.  The uploaded results file will be named as the same as the file in the import_url with results_ pre-pended.   If this directory is not supplied the upload file will be placed in the same directory as the file specified in import_url",
+            "description": "The full url to the directory on the ftp server where the result file (containing the response for each order placed) will be uploaded.  The uploaded results file will be named as the same as the file in the import_url with results_ pre-pended.   If this directory is not supplied the upload file will be placed in the same directory as the file specified in import_url. The path must not have a '..' segment, also if it is url encoded, or the request fails validation.",
             "type": "string",
             "example": "sftp:\/\/myserver.domain.local\/order\/place\/results"
           },
@@ -1373,6 +1793,55 @@
         },
         "required": [
           "platform_response"
+        ]
+      },
+      "InventoryInfoV2SuccessResponse": {
+        "description": "The response from a call to get inventory information for a list of variant ids. It has the variants that could be retrieved, and the ids of those that could not.",
+        "type": "object",
+        "properties": {
+          "inventory": {
+            "description": "The inventory information of the variants that were retrieved, by variant id",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "stock": {
+                  "type": "integer"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "product_id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "stock"
+              ]
+            },
+            "example": {
+              "VARIANT_ID_123": {
+                "stock": 1,
+                "sku": "222222",
+                "product_id": "PRODUCT_ID",
+                "url": "https:\/\/admin.shopify.com\/store\/MY_STORE_ID\/products\/PRODUCT_ID\/variants\/VARIANT_ID"
+              }
+            }
+          },
+          "failed_ids": {
+            "description": "The ids of the variants that could not be retrieved, for example because they do not exist",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "inventory",
+          "failed_ids"
         ]
       },
       "MixedResponse": {
@@ -1989,6 +2458,123 @@
                             "other"
                           ]
                         }
+                      }
+                    }
+                  },
+                  "example": {
+                    "ORDER_LINE_ID_456": {
+                      "quantity_cancelled": 1,
+                      "cancellation_reason": "other"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "platform_response": {
+            "$ref": "#\/components\/schemas\/SuccessResponse"
+          }
+        },
+        "required": [
+          "platform_response"
+        ]
+      },
+      "OrderStatusesV2SuccessResponse": {
+        "description": "The response from a call to get order statuses with \/v2\/order_statuses. The same as OrderStatuesSuccessResponse, except that each fulfillment of an order line has the id of the fulfillment in Shopify.",
+        "type": "object",
+        "properties": {
+          "failed_ids": {
+            "description": "List of orders that no status information was able to be retrieved",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "statuses": {
+            "description": "Fulfillment and Cancellation information for the requested orders",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "The order id",
+                  "type": "integer"
+                },
+                "fulfillments": {
+                  "description": "Key value pairs of order line ids and fulfillment information",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "fulfillments": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fulfillment_id": {
+                              "description": "The id of the fulfillment in Shopify",
+                              "type": "integer"
+                            },
+                            "quantity_shipped": {
+                              "type": "integer"
+                            },
+                            "shipped_date": {
+                              "type": "string"
+                            },
+                            "carrier": {
+                              "type": "string"
+                            },
+                            "tracking_number": {
+                              "type": "string"
+                            },
+                            "tracking_url": {
+                              "type": "string"
+                            },
+                            "return_tracking_number": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "total_fulfilled": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "example": {
+                    "ORDER_LINE_ID_123": {
+                      "fulfillments": [
+                        {
+                          "fulfillment_id": 5001,
+                          "quantity_shipped": 1,
+                          "shipped_date": "2023-11-17T07:38:17-08:00",
+                          "carrier": "Acme Delivery INC",
+                          "tracking_number": "TEST123",
+                          "tracking_url": "http:\/\/acme-delivery-inc.xyz?id=TEST123",
+                          "return_tracking_number": ""
+                        }
+                      ],
+                      "total_fulfilled": 1
+                    }
+                  }
+                },
+                "cancellations": {
+                  "description": "Key value pairs of order line ids and cancellation information",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "quantity_cancelled": {
+                        "type": "integer"
+                      },
+                      "cancellation_reason": {
+                        "type": "string",
+                        "enum": [
+                          "customer_cancelled",
+                          "fraud",
+                          "out_of_stock",
+                          "other"
+                        ]
                       }
                     }
                   },

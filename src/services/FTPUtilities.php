@@ -103,6 +103,39 @@ class FTPUtilities
     }
 
     /**
+     * The files are read from and written to the directories of the urls, so a path with a segment that goes up to the
+     * parent directory is not allowed.
+     *
+     * @param array $ftp_configuration The request, which has an import_url and can have a resultfile_url
+     * @return array Validation errors in the same format as JsonSchemaValidator
+     */
+    public static function validate_url_paths(array $ftp_configuration): array
+    {
+        $errors = [];
+        foreach (['import_url', 'resultfile_url'] as $field) {
+            $url = $ftp_configuration[$field] ?? null;
+            if (!is_string($url)) {
+                continue;
+            }
+
+            $path = parse_url($url, PHP_URL_PATH);
+            if (!is_string($path)) {
+                continue;
+            }
+
+            // The server decodes the path, so the encoded segments are checked too
+            $segments = preg_split('#[/\\\\]#', rawurldecode($path));
+            if (in_array('..', $segments, true)) {
+                $errors[] = [
+                    'code' => JsonSchemaValidator::FIELD_INVALID_VALUE,
+                    'message' => "'{$field}' Path must not contain '..'",
+                ];
+            }
+        }
+        return $errors;
+    }
+
+    /**
      * @param string $fq_url
      * @return string
      */
@@ -180,7 +213,6 @@ class FTPUtilities
         if ($curl_errorno) {
             throw new FtpException(self::CURL_ERROR_MESSAGE_MAP[$curl_errorno], curl_errno($ch));
         }
-        curl_close($ch);
         $status = fseek($temp_file, 0);
 
         if ($status == -1) {

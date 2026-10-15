@@ -1028,14 +1028,12 @@ class ShopifyClient
             'refunds' => [],
             'platform_response' => []
         ];
-        $start_date_utc = null;
-        $end_date_utc = null;
 
         if (!$cursor) {
             $start_date_utc = gmdate('Y-m-d\TH:i:s\Z', strtotime($start_date));
             $end_date_utc = gmdate('Y-m-d\TH:i:s\Z', strtotime($end_date));
 
-            $order_count_info = $this->get_number_of_orders($start_date_utc, $end_date);
+            $order_count_info = $this->get_number_of_orders($start_date_utc, $end_date_utc);
             if (!$order_count_info['order_count']) {
                 if (!isset($order_count_info['error'])) {
                     $success_response['platform_response'] = $order_count_info['platform_response'];
@@ -1046,21 +1044,28 @@ class ShopifyClient
                     'platform_response' => $order_count_info['platform_response']
                 ];
             }
-        }
 
-        if (!$cursor) {
-            $financial_status = self::FINANCIAL_STATUSES[0];
             $page_info = null;
             $index = 0;
         } else {
+            // The cursor has everything needed to continue, including what is needed to start the next status
             $resume = json_decode(base64_decode($cursor), true);
-            $financial_status = $resume['financial_status'];
-            $page_info = $resume['page_info'];
-            $limit = $resume['limit'];
-            $index = array_search($financial_status, self::FINANCIAL_STATUSES);
+            $index = is_array($resume) ? array_search($resume['financial_status'] ?? null, self::FINANCIAL_STATUSES) : false;
+            if ($index === false) {
+                return [
+                    'error' => 'Invalid cursor',
+                    'platform_response' => []
+                ];
+            }
+            $page_info = $resume['page_info'] ?? null;
+            $limit = $resume['limit'] ?? $limit;
+            $start_date_utc = $resume['start_date'] ?? null;
+            $end_date_utc = $resume['end_date'] ?? null;
+            $app_id = $resume['app_id'] ?? '';
         }
 
         while (true) {
+            $financial_status = self::FINANCIAL_STATUSES[$index];
             $response = $page_info ?
                 $this->get_with_cursor_pagination([
                     "limit" => $limit,
@@ -1085,19 +1090,32 @@ class ShopifyClient
                 ];
             }
             $success_response['platform_response'] = $response;
-            $shopify_orders = $refunded_orders['orders'];
+            $shopify_orders = $refunded_orders['orders'] ?? [];
 
-            if (!count($shopify_orders)) {
-                $index++;
-                if ($index >= count(self::FINANCIAL_STATUSES)) {
-                    return $response;
-                }
-                $financial_status = self::FINANCIAL_STATUSES[$index];
-                $page_info = null;
-                continue;
+            // Where the next call continues: the next page of this status, or else the first page of the next status.
+            // Orders that are fully refunded are only found with the refunded status, so each status is needed
+            $next_cursor = null;
+            if (!empty($next_page_params['page_info'])) {
+                $next_cursor = [
+                    'financial_status' => $financial_status,
+                    'page_info' => $next_page_params['page_info'],
+                    'limit' => $next_page_params['limit'] ?? $limit,
+                ];
+            } elseif (isset(self::FINANCIAL_STATUSES[$index + 1])) {
+                $next_cursor = [
+                    'financial_status' => self::FINANCIAL_STATUSES[$index + 1],
+                    'page_info' => null,
+                    'limit' => $limit,
+                ];
             }
 
-            $orders_in_batch = count($shopify_orders);
+            if (!count($shopify_orders) && $next_cursor) {
+                // Nothing on this page, so look at the next one without returning
+                $index = array_search($next_cursor['financial_status'], self::FINANCIAL_STATUSES);
+                $page_info = $next_cursor['page_info'];
+                $limit = $next_cursor['limit'];
+                continue;
+            }
 
             foreach ($shopify_orders as $shopify_order) {
                 if ($this->order_contains_cancellations($shopify_order)) {
@@ -1132,7 +1150,7 @@ class ShopifyClient
                         foreach ($shopify_order['line_items'] as $order_line_item) {
                             $success_response['refunds'][] = [
                                 "id" => $shopify_refund['id'],
-                                "refund_number" => $shopify_refund['id'] . '-' . $refund_line_item['id'],
+                                "refund_number" => $shopify_refund['id'] . '-' . $order_line_item['id'],
                                 "partial_refund_compatible" => true,
                                 "refund_id" => $shopify_refund['id'],
                                 "refund_line_id" => $order_line_item['id'],
@@ -1144,18 +1162,16 @@ class ShopifyClient
                 }
             }
 
-            if ($next_page_params['page_info']) {
-                $success_response['cursor'] = base64_encode(json_encode([
-                    "limit" => $next_page_params['limit'],
-                    "page_info" => $next_page_params['page_info'],
-                    "status" => $financial_status
+            if ($next_cursor) {
+                $success_response['cursor'] = base64_encode(json_encode($next_cursor + [
+                    'start_date' => $start_date_utc,
+                    'end_date' => $end_date_utc,
+                    'app_id' => $app_id,
                 ]));
             }
             return $success_response;
 
         }
-
-        return $success_response;
     }
 
     /**
