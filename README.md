@@ -8,10 +8,41 @@ composer
 webserver configured to run php
 
 ## Installation
-Checkout this repo
-In the root of the checkout run:  
+Checkout this repo.
+
+### Production
+In the root of the checkout run the following. It installs only what the application needs, without PHPUnit, and 
+optimizes the autoloader:
+```
+composer install --no-dev --optimize-autoloader
+```
+
+### Development
+In the root of the checkout run the following. It also installs the development dependencies (PHPUnit):
 ```
 composer install
+```
+
+## Running the tests
+The unit tests use PHPUnit and are in the /tests directory. PHPUnit is a development dependency, so install the 
+dependencies as described in [Development](#development) first. Then, in the root of the checkout run:
+```
+vendor/bin/phpunit
+```
+
+To run a single test file, or only the tests with a name that matches a pattern:
+```
+vendor/bin/phpunit tests/ShopifyGraphqlClientTest.php
+vendor/bin/phpunit --filter test_order_statuses
+```
+
+The tests do not make requests to Shopify. The configuration is in /phpunit.xml.
+
+### Tests of the application in the FeedAMP development environment
+If the sdk is running in the FeedAMP Kubernetes development environment with the `bagpiper_docker` script of FeedAMP, 
+the tests can be run in its pod, which has the dependencies installed:
+```
+docker/bagpiper_docker test
 ```
 
 ## Sample application

@@ -11,7 +11,7 @@ class JsonSchemaValidator
     const FIELD_INVALID_VALUE = 'FIELD_INVALID_VALUE';
     const UNKNOWN_FIELD_PRESENT = 'UNKNOWN_FIELD_PRESENT';
 
-    private Validator $validator;
+    private Factory $factory;
     private $json_schema_object;
 
     public function __construct(string $json_schema_path)
@@ -21,8 +21,7 @@ class JsonSchemaValidator
 
         $schema_storage = new SchemaStorage();
         $schema_storage->addSchema('file://mySchema', $this->json_schema_object);
-        $factory = new Factory($schema_storage);
-        $this->validator = new Validator($factory);
+        $this->factory = new Factory($schema_storage);
     }
 
     public function validate(array $payload, string $model, array $ignore_validation_errors = [])
@@ -38,9 +37,11 @@ class JsonSchemaValidator
             $payload = json_decode(json_encode($payload), false);
         }
 
-        $this->validator->validate($payload, (object)$this->json_schema_object->components->schemas->$model);
-        if (!$this->validator->isValid()) {
-            foreach ($this->validator->getErrors() as $validation_error) {
+        // A validator keeps the errors of what it validated, so each payload gets its own
+        $validator = new Validator($this->factory);
+        $validator->validate($payload, (object)$this->json_schema_object->components->schemas->$model);
+        if (!$validator->isValid()) {
+            foreach ($validator->getErrors() as $validation_error) {
                 $error = $this->get_response_for_validation_error($validation_error);
                 $error = $this->filter_ignored_errors($error, $ignore_validation_errors);
                 if ($error) {

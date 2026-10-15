@@ -7,6 +7,7 @@ use ShopifyOrdersConnector\services\FTPUtilities;
 use ShopifyOrdersConnector\services\JsonSchemaValidator;
 use ShopifyOrdersConnector\services\OrderUtils;
 use ShopifyOrdersConnector\services\ShopifyClient;
+use ShopifyOrdersConnector\services\ShopifyGraphqlClient;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -158,7 +159,7 @@ $app->post('/ftp_place_orders', function (Request $request, Response $response, 
         ];
     } else {
         $validator = new JsonSchemaValidator(JSON_SCHEMA_FILE);
-        $validation_errors = array_merge($validation_errors, $validator->validate($ftp_configuration, "FTPPlaceOrders"));
+        $validation_errors = array_merge($validation_errors, $validator->validate($ftp_configuration, "FTPPlaceOrders"), FTPUtilities::validate_url_paths($ftp_configuration));
     }
 
     if ($validation_errors) {
@@ -229,9 +230,9 @@ $app->post('/ftp_place_orders', function (Request $request, Response $response, 
     }
 
     $results_handle = tmpfile();
-    fputcsv($results_handle, BatchUtils::PLACE_ORDERS_RESULTS_HEADERS);
+    fputcsv($results_handle, BatchUtils::PLACE_ORDERS_RESULTS_HEADERS, ',', '"', '\\');
     foreach($validation_errors as $error){
-        fputcsv($results_handle, array_values($error));
+        fputcsv($results_handle, array_values($error), ',', '"', '\\');
     }
 
     $shopify_errors = [];
@@ -239,7 +240,7 @@ $app->post('/ftp_place_orders', function (Request $request, Response $response, 
     {
         $place_response = $shopify_client->process_place_order_retry_rate_limits($order);
 
-        fputcsv($results_handle, array_values($place_response));
+        fputcsv($results_handle, array_values($place_response), ',', '"', '\\');
         if($place_response['status'] != 'SUCCESS'){
             $shopify_errors[] = implode(",",$place_response);
         }
@@ -774,6 +775,353 @@ $app->post('/refund_order_lines', function (Request $request, Response $response
         $response = $response->withStatus(200);
     }
     $response->getBody()->write(json_encode($raw_response));
+    return $response;
+});
+
+/**
+ * V2 ROUTES
+ *
+ * These take the same requests as the routes above, but use the Shopify GraphQL API. The body of the Shopify
+ * response in platform_response is the raw GraphQL JSON.
+ */
+
+/**
+ * @param string $store_id
+ * @param string $access_token
+ * @return array
+ */
+function validate_store_headers(string $store_id, string $access_token): array
+{
+    $validation_errors = [];
+    if (!$store_id) {
+        $validation_errors[] = [
+            "code" => "MISSING_REQUIRED_FIELD",
+            "message" => "Missing value for required header store-id"
+        ];
+    } else if (!preg_match('/^[a-zA-Z0-9\-\.]+$/', $store_id)) {
+        $validation_errors[] = [
+            "code" => "FIELD_INVALID_VALUE",
+            "message" => "Invalid value for required header store-id"
+        ];
+    }
+    if (!$access_token) {
+        $validation_errors[] = [
+            "code" => "MISSING_REQUIRED_FIELD",
+            "message" => "Missing value for required header token"
+        ];
+    }
+    return $validation_errors;
+}
+
+$app->post('/v2/place_order', function (Request $request, Response $response, $args) {
+    $response = $response->withHeader('content-type', 'application/json');
+    $store_id = $request->getHeaderLine('store-id');
+    $access_token = $request->getHeaderLine('token');
+    $debug_request = ($request->getHeaderLine('debug-request') ?? 'false') == 'true';
+
+    $order_data = $request->getParsedBody();
+    $validation_errors = validate_store_headers($store_id, $access_token);
+
+    if (!$order_data) {
+        $validation_errors[] = [
+            "code" => "INVALID_PAYLOAD",
+            "message" => "Payload could not be parsed as JSON"
+        ];
+    } else {
+        $validator = new JsonSchemaValidator(JSON_SCHEMA_FILE);
+
+        $ignore_validation_errors = [];
+        if (isset($order_data['config']['shipping_method_map'])
+            && is_array($order_data['config']['shipping_method_map'])
+            && !$order_data['config']['shipping_method_map']
+        ) {
+            // Filter out the incorrect validation error that occurs when an empty shipping_method_map object ({})
+            // gets decoded as an empty array ([]). JsonValidationSchema fails validation due to the type mismatch
+            $ignore_validation_errors[] = [
+                'code' => 'FIELD_INVALID_VALUE',
+                'message' => "'config.shipping_method_map' Array value found, but an object is required"
+            ];
+        }
+
+        $validation_errors = array_merge(
+            $validation_errors,
+            $validator->validate($order_data, "PlaceOrder", $ignore_validation_errors),
+            OrderUtils::validate_place_order_variant_ids($order_data)
+        );
+    }
+
+    if ($validation_errors) {
+        $response = $response->withStatus(400);
+        $response->getBody()->write(json_encode($validation_errors));
+        return $response;
+    }
+
+    $shopify_client = new ShopifyGraphqlClient($store_id, $access_token, new HttpClient(), $debug_request);
+    $raw_response = $shopify_client->process_place_order($order_data);
+
+    $response = $response->withStatus($shopify_client->is_graphql_error_response($raw_response) ? 502 : 200);
+    $response->getBody()->write(json_encode(["platform_response" => $raw_response]));
+    return $response;
+});
+
+$app->post('/v2/ftp_place_orders', function (Request $request, Response $response, $args) {
+    $response = $response->withHeader('content-type', 'application/json');
+    $store_id = $request->getHeaderLine('store-id');
+    $access_token = $request->getHeaderLine('token');
+    $debug_request = ($request->getHeaderLine('debug-request') ?? 'false') == 'true';
+
+    $ftp_configuration = $request->getParsedBody();
+    $validation_errors = validate_store_headers($store_id, $access_token);
+
+    if (!$ftp_configuration) {
+        $validation_errors[] = [
+            "code" => "INVALID_PAYLOAD",
+            "message" => "Payload could not be parsed as JSON"
+        ];
+    } else {
+        $validator = new JsonSchemaValidator(JSON_SCHEMA_FILE);
+        $validation_errors = array_merge($validation_errors, $validator->validate($ftp_configuration, "FTPPlaceOrders"), FTPUtilities::validate_url_paths($ftp_configuration));
+    }
+
+    if ($validation_errors) {
+        $response = $response->withStatus(400);
+        $response->getBody()->write(json_encode($validation_errors));
+        return $response;
+    }
+
+    $shopify_client = new ShopifyGraphqlClient($store_id, $access_token, new HttpClient(), $debug_request);
+
+    $import_file = $ftp_configuration['import_url'];
+    $ftp_utils = new FTPUtilities($ftp_configuration['username'], $ftp_configuration['password']);
+
+    // The results file is named after the import file
+    if (!isset($ftp_configuration['resultfile_url'])) {
+        $results_file_url = $ftp_utils->get_ftp_server($import_file) . $ftp_utils->get_directory($import_file);
+    } else {
+        $results_file_url = $ftp_configuration['resultfile_url'];
+    }
+    $results_file_name = $ftp_utils->build_results_file_name($ftp_utils->get_file_name($import_file));
+    $results_file_url .= "/" . $results_file_name;
+
+    try {
+        $import_handle = $ftp_utils->download($import_file);
+    } catch (FileException|FtpException $e) {
+        if ($e instanceof FtpException) {
+            $error = "Curl error [{$e->getCode()}]: {$e->getMessage()}";
+        } else {
+            $error = $e->getMessage();
+        }
+        $response = $response->withStatus(502);
+        $response->getBody()->write(json_encode([
+            "error" => "An error occurred trying to download the file: " . $error
+        ]));
+        return $response;
+    }
+
+    $batch_utils = new BatchUtils();
+    $results = [];
+    $validation_errors = [];
+    try {
+        $orders = $batch_utils->get_orders_from_csv($import_handle, $validation_errors);
+        fclose($import_handle);
+    } catch (FileException $e) {
+        $response = $response->withStatus(502);
+        $response->getBody()->write(json_encode([
+            "error" => "Unable to parse the requested file: " . $e->getMessage(),
+        ]));
+        return $response;
+    }
+
+    $results_handle = tmpfile();
+    fputcsv($results_handle, BatchUtils::PLACE_ORDERS_RESULTS_HEADERS, ',', '"', '\\');
+    foreach ($validation_errors as $error) {
+        fputcsv($results_handle, array_values($error), ',', '"', '\\');
+    }
+
+    $shopify_errors = [];
+    foreach ($orders as $order) {
+        $place_response = $shopify_client->process_place_order_for_ftp($order);
+
+        fputcsv($results_handle, array_values($place_response), ',', '"', '\\');
+        if ($place_response['status'] != 'SUCCESS') {
+            $shopify_errors[] = implode(",", $place_response);
+        }
+    }
+    try {
+        $ftp_utils->upload($results_file_url, $results_handle);
+    } catch (FileException|FtpException $e) {
+        if ($e instanceof FtpException) {
+            $error = "Curl error [{$e->getCode()}]: {$e->getMessage()}";
+        } else {
+            $error = $e->getMessage();
+        }
+        $response = $response->withStatus(502);
+        $results["error"] = "Unable to upload the results file: " . $error;
+        $results["platform_errors"] = $shopify_errors;
+        $response->getBody()->write(json_encode($results));
+        return $response;
+    }
+    fclose($results_handle);
+
+    $response = $response->withStatus(200);
+    $results["results_url"] = $results_file_url;
+    $response->getBody()->write(json_encode($results));
+    return $response;
+});
+
+$app->get('/v2/order_statuses', function (Request $request, Response $response, $args) {
+    $response = $response->withHeader('content-type', 'application/json');
+    $store_id = $request->getHeaderLine('store-id');
+    $access_token = $request->getHeaderLine('token');
+    $debug_request = ($request->getHeaderLine('debug-request') ?? 'false') == 'true';
+
+    $query_params = $request->getQueryParams();
+    $ids = $query_params['store_order_ids'] ?? "";
+    $store_order_ids = explode(',', $ids);
+
+    $validation_errors = validate_store_headers($store_id, $access_token);
+    if (!$ids) {
+        $validation_errors[] = [
+            "code" => "MISSING_QUERY_PARAM",
+            "message" => "Missing required store_order_ids"
+        ];
+    }
+    if (count($store_order_ids) > 250) {
+        $validation_errors[] = [
+            "code" => "INVALID_QUERY_PARAM",
+            "message" => "Number of items in store_order_ids > 250"
+        ];
+    }
+
+    if ($validation_errors) {
+        $response = $response->withStatus(400);
+        $response->getBody()->write(json_encode($validation_errors));
+        return $response;
+    }
+
+    $shopify_client = new ShopifyGraphqlClient($store_id, $access_token, new HttpClient(), $debug_request);
+    $status_response = $shopify_client->process_order_statuses($store_order_ids);
+
+    $failed_request = $shopify_client->is_graphql_error_response($status_response);
+
+    $response = $response->withStatus($failed_request || empty($status_response['statuses']) ? 502 : 200);
+    $response->getBody()->write(json_encode($status_response));
+    return $response;
+});
+
+$app->get('/v2/order_refunds', function (Request $request, Response $response, $args) {
+    $response = $response->withHeader('content-type', 'application/json');
+    $store_id = $request->getHeaderLine('store-id');
+    $access_token = $request->getHeaderLine('token');
+    $debug_request = ($request->getHeaderLine('debug-request') ?? 'false') == 'true';
+
+    $query_params = $request->getQueryParams();
+    $validation_errors = validate_store_headers($store_id, $access_token);
+
+    $cursor = $query_params['cursor'] ?? "";
+    $order_id = $query_params['order_id'] ?? "";
+    $ids_only = filter_var($query_params['ids_only'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    $limit = 250;
+
+    // The dates are only needed to search for orders, not to resume a search or to get a single order
+    if (!$cursor && $order_id === "") {
+        foreach (["updated_at_min", "updated_at_max"] as $date) {
+            if (!isset($query_params[$date])) {
+                $validation_errors[] = [
+                    "code" => "MISSING_REQUIRED_FIELD",
+                    "message" => "Missing value for " . $date
+                ];
+                continue;
+            }
+            if (!strtotime($query_params[$date])) {
+                $validation_errors[] = [
+                    "code" => "FIELD_INVALID_VALUE",
+                    "message" => "Value for {$date} could not be parsed"
+                ];
+            }
+        }
+        if (isset($query_params['limit'])) {
+            $limit = intval($query_params['limit']);
+            if ($limit < 1 || $limit > 250) {
+                $validation_errors[] = [
+                    "code" => "FIELD_INVALID_VALUE",
+                    "message" => "Value for limit. Value must be between 1 and 250"
+                ];
+            }
+        }
+    }
+
+    if ($validation_errors) {
+        $response = $response->withStatus(400);
+        $response->getBody()->write(json_encode($validation_errors));
+        return $response;
+    }
+
+    $shopify_client = new ShopifyGraphqlClient($store_id, $access_token, new HttpClient(), $debug_request);
+    $refunds = $shopify_client->process_order_refunds(
+        $query_params['updated_at_min'] ?? "",
+        $query_params['updated_at_max'] ?? "",
+        $query_params['attribution_app_id'] ?? "",
+        $limit,
+        $cursor,
+        $ids_only,
+        $order_id
+    );
+
+    $response = $response->withStatus(isset($refunds['error']) ? 502 : 200);
+    $response->getBody()->write(json_encode($refunds));
+    return $response;
+});
+
+$app->get('/v2/inventory_info', function (Request $request, Response $response, $args) {
+    $response = $response->withHeader('content-type', 'application/json');
+    $store_id = $request->getHeaderLine('store-id');
+    $access_token = $request->getHeaderLine('token');
+    $debug_request = ($request->getHeaderLine('debug-request') ?? 'false') == 'true';
+
+    $query_params = $request->getQueryParams();
+    $ids = $query_params['variant_ids'] ?? "";
+    $variant_ids = explode(',', $ids);
+
+    $validation_errors = validate_store_headers($store_id, $access_token);
+    if (!$ids) {
+        $validation_errors[] = [
+            "code" => "MISSING_QUERY_PARAM",
+            "message" => "Missing required variant_ids"
+        ];
+    }
+    if (count($variant_ids) > 250) {
+        $validation_errors[] = [
+            "code" => "INVALID_QUERY_PARAM",
+            "message" => "Number of variant_id in variant_ids > 250"
+        ];
+    }
+
+    if ($validation_errors) {
+        $response = $response->withStatus(400);
+        $response->getBody()->write(json_encode($validation_errors));
+        return $response;
+    }
+
+    $shopify_client = new ShopifyGraphqlClient($store_id, $access_token, new HttpClient(), $debug_request);
+    $inventory = $shopify_client->process_inventory_info($variant_ids);
+
+    if (isset($inventory['platform_response'])) {
+        $response = $response->withStatus(502);
+        $response->getBody()->write(json_encode([
+            "failed_ids" => $inventory['failed_ids'],
+            "error" => $inventory['error'],
+            "platform_response" => $inventory['platform_response']
+        ]));
+        return $response;
+    }
+
+    // The inventory of the variants that were found, and the ids of the ones that were not
+    $response = $response->withStatus(200);
+    $response->getBody()->write(json_encode([
+        "inventory" => $inventory['inventory'],
+        "failed_ids" => $inventory['failed_ids'],
+    ]));
     return $response;
 });
 
